@@ -1,0 +1,38 @@
+<!DOCTYPE HTML>
+
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="styles/default.css">
+    <link rel="stylesheet" href="styles/canvas.css">
+    <link rel="stylesheet" href="styles/manage-views.css">
+    <title>MAP STUFF</title>
+  </head>
+  <body>
+    <script type="module" src="scripts/canvas.js"></script>
+    <script type="module" src="scripts/manage-views.js"></script>
+
+    <div id="layout">
+      <div id="views" class="safe column">
+        <div id="views-stage"></div>
+        <button class="button" onclick="upload_map">Upload Map</button>
+      </div>
+
+      <div id="tokens" class="column">
+        <div class="safe">
+          <div id="widgets-top"></div>
+
+          <div id="tokens-stage" ></div>
+          
+          <button class="button" onclick="add_token">Add Token</button>
+          <button class="button" onclick="add_token">Upload Token</button>
+        </div>
+
+        <div id="widgets">
+          <div class="widget widget--initiative"></div>
+          <div class="widget widget--notes"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

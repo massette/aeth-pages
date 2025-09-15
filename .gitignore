@@ -1,0 +1,8 @@
+.*
+!.gitignore
+
+# ignore test server stuff
+node_modules/
+index.js
+package.json
+package-lock.json

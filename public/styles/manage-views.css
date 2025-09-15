@@ -1,0 +1,46 @@
+#layout {
+  --safe-height: min(36vw + 6.096rem,
+                     100vh - 1rem);
+
+  width: 100%;
+  height: calc(100vh - 1rem);
+
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+
+  background: #DC267F;
+}
+
+#views-stage {
+  height: calc(var(--safe-height) - 1.9rem);
+  aspect-ratio: 1 / 1;
+
+  background: #785EF0;
+}
+
+.safe {
+  height: var(--safe-height);
+}
+
+#widgets-top {
+  flex-grow: 1;
+  width: 100%;
+
+  background: #44CF9F;
+}
+
+#tokens-stage {
+  height: calc(var(--safe-height) - 1.9rem - 1.9rem - 5.5rem - 0.2rem);
+  aspect-ratio: 16 / 9;
+
+  background: #785EF0;
+  border: 0.2rem solid black;
+}
+
+#widgets {
+  margin-top: 0.5rem;
+
+  height: 300vh;
+  background: #44CF9F;
+}

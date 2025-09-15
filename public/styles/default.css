@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Chivo+Mono:ital,wght@0,100..900;1,100..900&display=swap');
+
+html { font-size: 100%; }
+
+body {
+  font: 1rem "Chivo Mono";
+  margin: 0.5rem;
+}
+
+input, button {
+  font: inherit;
+  line-height: 1;
+}
+
+.column {
+  height: 100%;
+  overflow: scroll;
+
+  background: #FFB000;
+}
+
+.safe {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.button {
+  display: block;
+  width: 100%;
+
+  text-transform: capitalize;
+  text-align: center;
+
+  padding: 0.2rem;
+  border: none;
+
+  background: #000;
+  color: #FFF;
+}
