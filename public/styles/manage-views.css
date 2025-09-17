@@ -1,6 +1,5 @@
 #layout {
-  --safe-height: min(36vw + 6.096rem,
-                     100vh - 1rem);
+  --safe-height: min(36vw + 6.096rem, 100vh - 1rem);
 
   width: 100%;
   height: calc(100vh - 1rem);
@@ -31,11 +30,10 @@
 }
 
 #tokens-stage {
-  height: calc(var(--safe-height) - 1.9rem - 1.9rem - 5.5rem - 0.2rem);
+  height: calc(var(--safe-height) - 9.3rem);
   aspect-ratio: 16 / 9;
 
   background: #785EF0;
-  border: 0.2rem solid black;
 }
 
 #widgets {

@@ -1,81 +1,81 @@
-// group of stacked canvases
 export class Stage {
-  container;
-  layers = [];
-
+  element;
+  layers;
   width;
   height;
 
-  call(name, ...args) {
-    for (const layer of this.layers) {
-      if (layer[name]) {
-        layer[name](...args);
-      }
-    }
-  }
-
-  render() {
-    // draw layers
-    for (const layer of this.layers) {
+  render(ev) {
+    this.layers.forEach((layer) => {
+      // clear canvas
       layer.context.resetTransform();
-      layer.context.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
+      layer.context.clearRect(0, 0, this.width, this.height);
 
-      if (!layer.draw)
-        throw new Error("Cannot render layer with no draw function");
+      // callback for drawing to canvas
+      layer.draw(layer.context, ev);
+    });
+  }
 
-      layer.draw(layer.context);
+  call(funcName, ...args) {
+    // iterate backwards from highest layer
+    for (let i = this.layers.length - 1; i >= 0; i--) {
+      if (this.layers[i][funcName])
+        this.layers[i][funcName](...args);
     }
+
+    // render changes in all layers
+    this.render();
   }
 
-  constructor(container) {
-    this.container = container;
-    this.container.classList.add("canvas-stage");
+  constructor(element) {
+    this.element = element;
+    this.element.classList.add("canvas-stage");
 
-    this.width = this.container.clientWidth;
-    this.height = this.container.clientHeight;
+    this.layers = [];
 
-    /* EVENT CALLBACKS */
-    // TODO: centralize non-canvas events on the stage
-    this.container.addEventListener("mousedown", (ev) => {
-      this.call("mousedown", ev.offsetX, ev.offsetY, ev.button, ev);
-      this.render();
-    });
+    this.width = this.element.clientWidth;
+    this.height = this.element.clientHeight;
 
-    this.container.addEventListener("wheel", (ev) => {
-      this.call("wheel", ev.offsetX, ev.offsetY, ev.deltaX, ev.deltaY, ev);
-      this.render();
-    });
+    // attach layer events
+    this.element.addEventListener("mousedown", (ev) =>
+      this.call("mousedown", ev.offsetX, ev.offsetY, ev.button, ev));
 
-    this.container.addEventListener("mouseup",   (ev) => {
-      this.call("mouseup", ev.offsetX, ev.offsetY, ev.button, ev);
-      this.render();
-    });
+    this.element.addEventListener("wheel", (ev) => 
+      this.call("wheel", ev.offsetX, ev.offsetY, ev.deltaX, ev.deltaY, ev));
 
-    this.container.addEventListener("mousemove", (ev) => {
-      this.call("mousemove", ev.offsetX, ev.offsetY, ev.buttons, ev);
-      this.render();
-    });
+    this.element.addEventListener("mouseup",   (ev) =>
+      this.call("mouseup", ev.offsetX, ev.offsetY, ev.button, ev));
 
+    this.element.addEventListener("mousemove", (ev) => 
+      this.call("mousemove", ev.offsetX, ev.offsetY, ev.buttons, ev));
+
+    // attach window events
     window.addEventListener("resize", (ev) => {
-      this.width = this.container.clientWidth;
-      this.height = this.container.clientHeight;
+      this.width = this.element.clientWidth;
+      this.height = this.element.clientHeight;
 
-      this.call("resize", this.width, this.height);
+      for (let i = this.layers.length - 1; i >= 0; i--) {
+        this.layers[i].canvas.width = this.width;
+        this.layers[i].canvas.height = this.height;
+
+        if (this.layers[i].resize)
+          this.layers[i].resize(this.width, this.height, ev);
+      }
+
       this.render();
     });
   }
 
-  add(layer) {
-    this.container.appendChild(layer.canvas);
+  addLayer(layer) {
+    // add new layers to top of stack
     this.layers.push(layer);
+    this.element.appendChild(layer.canvas);
 
-    // force resize to initial stage dimensions
-    if (layer.resize)
-      layer.resize(this.container.clientWidth, this.container.clientHeight);
-    
-    // note: canvas not cleared before initial draw
-    if (layer.draw)
-      layer.draw(layer.context);
+    // force initial resize to stage dimensions
+    layer.canvas.width = this.width;
+    layer.canvas.height = this.height;
+
+    // force rerender new layer
+    layer.draw(layer.context);
   }
 }
 
@@ -87,60 +87,12 @@ export class Layer {
   constructor() {
     this.canvas = document.createElement("canvas");
     this.canvas.className = "canvas-layer";
+    
 
     this.context = this.canvas.getContext("2d");
   }
 
-  // set canvas dimensions
-  resize(width, height) {
-    this.canvas.width = width;
-    this.canvas.height = height;
-  }
-}
-
-// box with transform
-export class Rect {
-  constructor(x, y, width, height) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-
-    this.scale = 1;
-  }
-
   draw(ctx) {
-    ctx.fillStyle = "#00F5";
-    ctx.fillRect(this.x, this.y, this.width * this.scale, this.height * this.scale);
-
-    ctx.strokeStyle = "#00F";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(this.x, this.y, this.width * this.scale, this.height * this.scale);
-  }
-
-  drawHandles(ctx) {
-
-    ctx.strokeStyle = "#FFF";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(this.x, this.y, this.width * this.scale, this.height * this.scale);
-
-    const radius = 3;
-    ctx.fillStyle = "#FFF";
-    const left = this.x - radius;
-    const right = this.x + this.width * this.scale - radius;
-    const top = this.y - radius;
-    const bottom = this.y + this.height * this.scale - radius;
-
-    ctx.fillRect(left, top, 2 * radius, 2 * radius);
-    ctx.fillRect(right, top, 2 * radius, 2 * radius);
-    ctx.fillRect(left, bottom, 2 * radius, 2 * radius);
-    ctx.fillRect(right, bottom, 2 * radius, 2 * radius);
-  }
-
-  contains(x, y) {
-    return (x >= this.x) && (x < this.x + this.width * this.scale)
-        && (y >= this.y) && (y < this.y + this.height * this.scale);
+    throw new Error(`Cannot draw layer without declared draw function!`);
   }
 }
-
-// image with transform
