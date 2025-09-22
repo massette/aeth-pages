@@ -1,9 +1,9 @@
-const server = "localhost:3000";
-
 function uploadMap(ev) {
-  const file = ev.target.files[0]
+  const file = ev.target.files[0];
+  const parts = file.name.split();
+  parts.pop();
 
-  fetch(`${server}/api/files/images/${file.name}?userid=gamemaster`, {
+  fetch(`/api/files/images/${parts.join('.')}?userid=gamemaster`, {
     method: "POST",
     body: file,
   });
