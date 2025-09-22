@@ -3,7 +3,7 @@
 
 # ignore test server stuff
 node_modules/
-images/
+#images/
 index.js
 package.json
 package-lock.json
