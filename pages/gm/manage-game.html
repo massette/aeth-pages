@@ -9,6 +9,7 @@
     <title>MAP STUFF</title>
   </head>
   <body>
+    <script src="/scripts/calls.js"></script>
     <script type="module" src="/scripts/canvas.js"></script>
     <script type="module" src="/scripts/map.js"></script>
     <script type="module" src="/scripts/views/move-screens.js"></script>
@@ -16,7 +17,8 @@
     <div id="layout">
       <div id="views" class="safe column">
         <div id="views-stage"></div>
-        <button class="button" onclick="upload_map">Upload Map</button>
+        <input id="image-upload" class="hidden" type="file" accept="image/*" onchange="uploadMap(event)">
+        <button class="button" onclick="document.getElementById('image-upload').click()">Upload Map</button>
       </div>
 
       <div id="tokens" class="column">

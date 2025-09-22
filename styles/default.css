@@ -19,6 +19,8 @@ input, button {
   background: #FFB000;
 }
 
+.hidden { display: none; }
+
 .safe {
   display: flex;
   flex-direction: column;
@@ -37,4 +39,6 @@ input, button {
 
   background: #000;
   color: #FFF;
+
+  cursor: pointer;
 }
