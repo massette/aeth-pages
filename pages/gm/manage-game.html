@@ -17,8 +17,10 @@
     <div id="layout">
       <div id="views" class="safe column">
         <div id="views-stage"></div>
-        <input id="image-upload" class="hidden" type="file" accept="image/*" onchange="uploadMap(event)">
-        <button class="button" onclick="document.getElementById('image-upload').click()">Upload Map</button>
+        <form id="map-upload-form" onsubmit="mapFormSubmit(event)" method="post" enctype="multipart/form-data">
+            <input type="file" id="map-input" name="file"/>
+            <input type="submit"/>
+        </form>
       </div>
 
       <div id="tokens" class="column">
