@@ -12,7 +12,7 @@
 }
 
 #views-stage {
-  height: calc(var(--safe-height) - 1.9rem);
+  height: calc(var(--safe-height) - 2.1rem);
   aspect-ratio: 1 / 1;
 
   background: #785EF0;
@@ -30,7 +30,7 @@
 }
 
 #tokens-stage {
-  height: calc(var(--safe-height) - 9.3rem);
+  height: calc(var(--safe-height) - 2.1rem - 2.1rem - 5.5rem);
   aspect-ratio: 16 / 9;
 
   background: #785EF0;
