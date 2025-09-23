@@ -2,16 +2,28 @@ import activeMap from "/scripts/map.js";
 
 /* API */
 export async function uploadMap(ev) {
-  // get file input
   const file = ev.target.files[0];
-  const parts = file.name.split();
+
+  // return if no file
+  if (!file)
+    return;
+
+  // construct form
+  const data = new FormData();
+  data.append("file", file);
+
+  const parts = file.name.split(".");
   parts.pop();
 
-  // make api request
-  const response = await fetch(`/api/files/images/${parts.join('.')}?userid=gamemaster`, {
+  // attempt upload
+  const response = await fetch(`/api/files/images/${parts.join(".")}?userid=gamemaster`, {
     method: "POST",
-    body: file,
+    body: data,
   });
+
+  // report status
+  if (!result.ok)
+    console.log(`Upload failed! Error ${result.status}.`);
 }
 
 function setMap(map) {
