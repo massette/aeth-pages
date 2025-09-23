@@ -9,26 +9,31 @@
     <title>MAP STUFF</title>
   </head>
   <body>
-    <script src="/scripts/calls.js"></script>
+    <script type="module" src="/scripts/calls.js"></script>
     <script type="module" src="/scripts/canvas.js"></script>
     <script type="module" src="/scripts/map.js"></script>
     <script type="module" src="/scripts/views/move-screens.js"></script>
 
+    <div class="hidden">
+      <input id="image-upload" type="file" accept="image/*">
+    </div>
+
     <div id="layout">
       <div id="views" class="safe column">
         <div id="views-stage"></div>
-        <input id="image-upload" class="hidden" type="file" accept="image/*" onchange="uploadMap(event)">
-        <button class="button" onclick="document.getElementById('image-upload').click()">Upload Map</button>
+        <button id="map-select" class="button">Select...</button>
+        <!--
+          <button class="button" onclick="document.getElementById('image-upload').click()">Upload...</button>
+        -->
       </div>
 
       <div id="tokens" class="column">
         <div class="safe">
-          <div id="widgets-top"></div>
-
-          <div id="tokens-stage" ></div>
+          <div id="widgets-top"><!-- canvas --></div>
+          <div id="tokens-stage" ><!-- canvas --></div>
           
-          <button class="button" onclick="add_token">Add Token</button>
-          <button class="button" onclick="add_token">Upload Token</button>
+          <button class="button" onclick="add_token">Select...</button>
+          <button class="button" onclick="add_token">Upload...</button>
         </div>
 
         <div id="widgets">
@@ -37,5 +42,7 @@
         </div>
       </div>
     </div>
+
+    <div id="overlay"></div>
   </body>
 </html>

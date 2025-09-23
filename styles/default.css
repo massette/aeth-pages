@@ -3,13 +3,11 @@
 html { font-size: 100%; }
 
 body {
+  --color-good: #44CF9F;
+  --color-bad:  #DC267F;
+
   font: 1rem "Chivo Mono";
   margin: 0.5rem;
-}
-
-input, button {
-  font: inherit;
-  line-height: 1;
 }
 
 .column {
@@ -27,18 +25,101 @@ input, button {
   gap: 0.5rem;
 }
 
+/* INPUTS */
+input, button {
+  font: inherit;
+  line-height: 1;
+}
+
 .button {
   display: block;
   width: 100%;
 
-  text-transform: capitalize;
   text-align: center;
 
-  padding: 0.2rem;
+  padding: 0.3rem;
   border: none;
 
   background: #000;
   color: #FFF;
 
+  transition: background 300ms ease;
+
   cursor: pointer;
+}
+
+.button:hover {
+  background: #282828;
+}
+
+.button-accept:hover {
+  background: var(--color-good);
+  color: #000;
+}
+.button-discard:hover {
+  background: var(--color-bad);
+}
+
+/* MODALS */
+#overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+
+  background: #0009;
+  transition: background-color ease 500ms;
+}
+
+#overlay:empty {
+  background: none;
+  pointer-events: none;
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+
+  width: 65rem;
+  max-width: calc(100vh - 3rem);
+  max-height: 70vh;
+
+  background: #000;
+  border: 0.2rem solid #FFF;
+  color: #FFF;
+}
+
+.modal-header {
+  display: flex;
+  flex-direction: row;
+
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-title {
+  flex-grow: 1;
+
+  text-align: center;
+  font-weight: bold;
+}
+
+.modal-exit {
+  font-size: 1.5rem;
+  width: calc(1.5rem + 2 * 0.3rem);
+}
+
+.modal-body > * {
+  border-top: 0.1rem dashed #FFF;
+}
+
+.modal-button {
+  
 }

@@ -1,5 +1,6 @@
 import { Stage, Layer } from "/scripts/canvas.js";
-import { Map } from "/scripts/map.js";
+import map from "/scripts/map.js";
+import { mapsModal, uploadMap } from "/scripts/calls.js";
 // import { peek } from "/scripts/views/move-peek.js";
 
 /* CONSTANTS */
@@ -34,9 +35,6 @@ const OP_NONE      = 0;
 const OP_TRANSLATE = 1;
 const OP_SCALE     = 2;
 let nextOperation = OP_NONE;
-
-// load map
-const map = new Map();
 
 /* DRAW MAP */
 const mapLayer = new Layer();
@@ -129,6 +127,14 @@ mapLayer.wheel = (x, y, dx, dy, ev) => {
 }
 
 stage.addLayer(mapLayer);
+
+map.register(stage);
+
+const mapSelect = document.getElementById("map-select");
+mapSelect.addEventListener("click", mapsModal);
+
+const mapUpload = document.getElementById("image-upload");
+mapUpload.addEventListener("change", uploadMap);
 
 /*
 // screen properties

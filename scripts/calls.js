@@ -1,10 +1,104 @@
-function uploadMap(ev) {
+import activeMap from "/scripts/map.js";
+
+/* API */
+export async function uploadMap(ev) {
+  // get file input
   const file = ev.target.files[0];
   const parts = file.name.split();
   parts.pop();
 
-  fetch(`/api/files/images/${parts.join('.')}?userid=gamemaster`, {
+  // make api request
+  const response = await fetch(`/api/files/images/${parts.join('.')}?userid=gamemaster`, {
     method: "POST",
     body: file,
   });
+}
+
+function setMap(map) {
+  // TODO: update active map on server side
+
+  // update map image
+  activeMap.image.src = `/api/files/images/${map.fileId}`;
+  console.log(activeMap.src);
+}
+
+async function getMaps() {
+  const response = await fetch("/api/maps");
+  return await response.json();
+}
+
+/* MODALS */
+function makeModal(name) {
+  const modal = document.createElement("div");
+
+  const title = document.createElement("div");
+  title.className = "modal-title";
+  title.textContent = name ?? "New Modal";
+
+  const exit = document.createElement("button");
+  exit.addEventListener("click", (ev) => modal.remove());
+  exit.className = "modal-exit button button-discard";
+  exit.textContent = "\u{2716}";
+
+  const header = document.createElement("div");
+  header.className = "modal-header";
+  header.appendChild(title);
+  header.appendChild(exit);
+
+  const content = document.createElement("div");
+  content.className = "modal-body";
+
+  modal.className = "modal";
+  modal.appendChild(header);
+  modal.appendChild(content);
+
+  const container = document.getElementById("overlay");
+  container.appendChild(modal);
+
+  return modal;
+}
+
+export async function mapsModal() {
+  const modal = makeModal("Select Map...");
+  const content = modal.getElementsByClassName("modal-body")[0];
+
+  // indicate loading
+  content.textContent = "LOADING ...";
+
+  // query server for map list
+  const maps = await getMaps();
+
+  // list existing maps
+  const list = document.createElement("div");
+
+  for (const map of maps) {
+    console.log(map);
+
+    const entry = document.createElement("button");
+    entry.className = "button";
+    entry.textContent = map.mapId;
+    entry.addEventListener("click", function(ev) {
+      setMap(map)
+      modal.remove();
+    });
+
+    list.appendChild(entry);
+  }
+
+  // or, upload new map
+  const newMap = document.createElement("button");
+  newMap.className = "modal-submit button";
+  newMap.textContent = "Upload a new map...";
+  newMap.addEventListener("click", function(ev) {
+    const trigger = document.getElementById("image-upload");
+    trigger.click();
+
+    modal.remove();
+  });
+
+  // clear modal on load
+  content.textContent = "";
+
+  content.appendChild(list);
+  content.appendChild(newMap);
 }

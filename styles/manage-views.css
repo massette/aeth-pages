@@ -1,5 +1,5 @@
 #layout {
-  --safe-height: min(36vw + 6.096rem, 100vh - 1rem);
+  --safe-height: min(36vw + 6.752rem, 100vh - 1rem);
 
   width: 100%;
   height: calc(100vh - 1rem);
