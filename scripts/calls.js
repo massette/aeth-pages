@@ -31,7 +31,6 @@ function setMap(map) {
 
   // update map image
   activeMap.image.src = `/api/files/images/${map.fileId}`;
-  console.log(activeMap.src);
 }
 
 async function getMaps() {
@@ -84,8 +83,6 @@ export async function mapsModal() {
   const list = document.createElement("div");
 
   for (const map of maps) {
-    console.log(map);
-
     const entry = document.createElement("button");
     entry.className = "button";
     entry.textContent = map.mapId;
