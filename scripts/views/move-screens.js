@@ -1,6 +1,6 @@
 import { Stage, Layer } from "/scripts/canvas.js";
 import map from "/scripts/map.js";
-import { mapsModal, uploadMap } from "/scripts/calls.js";
+import { openMapsModal, uploadMap } from "/scripts/calls.js";
 // import { peek } from "/scripts/views/move-peek.js";
 
 /* CONSTANTS */
