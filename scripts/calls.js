@@ -22,8 +22,8 @@ export async function uploadMap(ev) {
   });
 
   // report status
-  if (!result.ok)
-    console.log(`Upload failed! Error ${result.status}.`);
+  if (!response.ok)
+    console.log(`Upload failed! Error ${response.status}.`);
 }
 
 function setMap(map) {
