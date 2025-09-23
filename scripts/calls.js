@@ -24,6 +24,21 @@ export async function uploadMap(ev) {
   // report status
   if (!response.ok)
     console.log(`Upload failed! Error ${response.status}.`);
+  
+  const mapId = parts.join();
+  
+  const map_response = await fetch(`/api/maps/${mapId}?creator=gamemaster`, {
+      method: "POST",
+      body: {
+          mapId: mapId,
+          gridSizePixels: 16, // TODO: change
+          fileId: parts.join("."),
+          userId: "gamemaster",
+      }
+  })
+    
+    if (!map_response.ok)
+        console.log(`Map creation failed! Error ${map_response.status}.`);
 }
 
 function setMap(map) {
