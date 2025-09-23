@@ -69,7 +69,7 @@ function makeModal(name) {
   return modal;
 }
 
-export async function mapsModal() {
+export async function openMapsModal() {
   const modal = makeModal("Select Map...");
   const content = modal.getElementsByClassName("modal-body")[0];
 

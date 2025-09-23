@@ -131,9 +131,9 @@ stage.addLayer(mapLayer);
 map.register(stage);
 
 const mapSelect = document.getElementById("map-select");
-mapSelect.addEventListener("click", mapsModal);
+mapSelect.addEventListener("click", openMapsModal);
 
-const mapUpload = document.getElementById("image-upload");
+const mapUpload = document.getElementById("map-upload");
 mapUpload.addEventListener("change", uploadMap);
 
 /*
