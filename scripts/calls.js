@@ -15,15 +15,34 @@ export async function uploadMap(ev) {
   const parts = file.name.split(".");
   parts.pop();
 
+  // same id for both,
+  // may need a more robust solution in the future
+  const id = parts.join(".");
+
   // attempt upload
-  const response = await fetch(`/api/files/images/${parts.join(".")}?userid=gamemaster`, {
+  const imageResponse = await fetch(`/api/files/images/${id}?userid=gamemaster`, {
     method: "POST",
     body: data,
   });
 
   // report status
-  if (!result.ok)
-    console.log(`Upload failed! Error ${result.status}.`);
+  if (!imageResponse.ok)
+    console.log(`Image upload failed! Error ${response.status}.`);
+  
+  // attempt create map
+  const mapResponse = await fetch(`/api/maps/${id}?creator=gamemaster`, {
+      method: "POST",
+      body: {
+          mapId: mapId,
+          gridSizePixels: 16, // TODO: change
+          fileId: id,
+          userId: "gamemaster",
+      }
+  })
+    
+  // report status
+    if (!mapResponse.ok)
+        console.log(`Map creation failed! Error ${map_response.status}.`);
 }
 
 function setMap(map) {
