@@ -15,17 +15,21 @@ export async function uploadMap(ev) {
   const parts = file.name.split(".");
   parts.pop();
 
+  // same id for both,
+  // may need a more robust solution in the future
+  const id = parts.join(".");
+
   // attempt upload
-  const response = await fetch(`/api/files/images/${parts.join(".")}?userid=gamemaster`, {
+  const imageResponse = await fetch(`/api/files/images/${id}?userid=gamemaster`, {
     method: "POST",
     body: data,
   });
 
   // report status
-  if (!response.ok)
-    console.log(`Upload failed! Error ${response.status}.`);
+  if (!imageResponse.ok)
+    console.log(`Upload failed! Error ${imageResponse.status}.`);
   else
-    console.log(`Upload succeeded`,await response.json())
+    console.log(`Upload succeeded`,await imageResponse.json())
   const mapId = parts.join();
   
   const map_response = await fetch(`/api/maps/${mapId}?creator=gamemaster`, {
@@ -92,7 +96,7 @@ function makeModal(name) {
   return modal;
 }
 
-export async function mapsModal() {
+export async function openMapsModal() {
   const modal = makeModal("Select Map...");
   const content = modal.getElementsByClassName("modal-body")[0];
 

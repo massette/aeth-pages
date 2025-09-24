@@ -1,6 +1,6 @@
 import { Stage, Layer } from "/scripts/canvas.js";
 import map from "/scripts/map.js";
-import { mapsModal, uploadMap } from "/scripts/calls.js";
+import { openMapsModal, uploadMap } from "/scripts/calls.js";
 // import { peek } from "/scripts/views/move-peek.js";
 
 /* CONSTANTS */
@@ -131,9 +131,9 @@ stage.addLayer(mapLayer);
 map.register(stage);
 
 const mapSelect = document.getElementById("map-select");
-mapSelect.addEventListener("click", mapsModal);
+mapSelect.addEventListener("click", openMapsModal);
 
-const mapUpload = document.getElementById("image-upload");
+const mapUpload = document.getElementById("map-upload");
 mapUpload.addEventListener("change", uploadMap);
 
 /*
