@@ -126,7 +126,7 @@ export async function openMapsModal() {
   newMap.className = "modal-submit button";
   newMap.textContent = "Upload a new map...";
   newMap.addEventListener("click", function(ev) {
-    const trigger = document.getElementById("image-upload");
+    const trigger = document.getElementById("map-upload");
     trigger.click();
 
     modal.remove();
