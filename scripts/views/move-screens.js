@@ -50,27 +50,28 @@ mapLayer.draw = function(ctx) {
  
   // draw border
   ctx.restore();
-  // TODO: draw border in world space
-  ctx.beginPath();
-  ctx.rect(
-    Math.max(-offX, ctx.lineWidth / 2),
-    Math.max(-offY, ctx.lineWidth / 2),
-    Math.min(map.width * scale,
-             stage.width - ctx.lineWidth,
-             -offX + map.width * scale - ctx.lineWidth / 2,
-             stage.width + offX - ctx.lineWidth / 2),
-    Math.min(map.height * scale,
-             stage.height - ctx.lineWidth,
-             -offY + map.height * scale - ctx.lineWidth / 2,
-             stage.height + offY - ctx.lineWidth / 2));
 
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 0.2 * rem;
-  ctx.stroke();
+  ctx.strokeRect(
+    Math.max(-offX, 0) + ctx.lineWidth / 2,
+    Math.max(-offY, 0) + ctx.lineWidth / 2,
+    Math.min(map.width * scale, stage.width) - ctx.lineWidth,
+    Math.min(map.height * scale, stage.height) - ctx.lineWidth)
+
 }
 
 /* DRAW BOUNDS */
 const boundsLayer = new Layer();
+
+/* RESIZE MAP */
+mapLayer.resize = function(width, height) {
+  // zoom to show whole map
+  scale = stage.width / Math.max(map.width, map.height);
+
+  // enforce view boundaries
+  ({ x: offX, y: offY } = viewClamp(offX, offY));
+}
 
 /* MOUSE EVENTS */
 mapLayer.mousedown = function(x, y, buttons) {
