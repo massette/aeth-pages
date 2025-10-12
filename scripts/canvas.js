@@ -50,6 +50,9 @@ export class Stage {
 
     // attach window events
     window.addEventListener("resize", (ev) => {
+      const oldWidth = this.width;
+      const oldHeight = this.height;
+
       this.width = this.element.clientWidth;
       this.height = this.element.clientHeight;
 
@@ -58,7 +61,7 @@ export class Stage {
         this.layers[i].canvas.height = this.height;
 
         if (this.layers[i].resize)
-          this.layers[i].resize(this.width, this.height, ev);
+          this.layers[i].resize(this.width, this.height, oldWidth, oldHeight, ev);
       }
 
       this.render();
