@@ -18,9 +18,10 @@ map.image.addEventListener("load", function(ev) {
 
   for (const stage of stages) {
     // TODO: allow handling map change downstream
-    for (let i = stage.layers.length - 1; i >= 0; i--)
-      if (stage.layers[i].resize)
-        stage.layers[i].resize(stage.width, stage.height, ev);
+    for (let i = stage.layers.length - 1; i >= 0; i--) {
+      if (stage.layers[i].updateMap)
+        stage.layers[i].updateMap(map)
+    }
 
     stage.render();
   }
