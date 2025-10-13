@@ -13,7 +13,7 @@ const stage = new Stage(element);
 // layout constants
 const VIEW_BORDER   = 0.30 * U_REM;
 const SCREEN_BORDER = 0.10 * U_REM;
-const SELECT_BORDER = 0.15 * U_REM;
+const SELECT_BORDER = 0.20 * U_REM;
 
 const SCALE_HANDLE  = 0.50 * U_REM;
 
@@ -44,6 +44,20 @@ function update_view(x, y) {
         map.height - (view.height - 2 * VIEW_BORDER) / scale
       )
     : (map.height - (stage.height - 2 * VIEW_BORDER) / scale) / 2;
+}
+
+function to_world(x, y) {
+  return {
+    x: (x - VIEW_BORDER) / scale + view.x,
+    y: (y - VIEW_BORDER) / scale + view.y,
+  }
+}
+
+function to_screen(wx, wy) {
+  return {
+    x: (wx - view.x) * scale + VIEW_BORDER,
+    y: (wy - view.y) * scale + VIEW_BORDER,
+  }
 }
 
 // 
@@ -168,29 +182,33 @@ boundsLayer.updateMap = function(ctx) {
 }
 
 /*  */
-function draw_handles(ctx, rect, border) {
-  border = border ?? 1;
-
-  const x = (VIEW_BORDER + border) / 2 + (rect.x - view.x) * scale;
-  const y = (VIEW_BORDER + border) / 2 + (rect.y - view.y) * scale;
-  const width  = rect.width  * (rect.scale ?? 1.00) * scale - border;
-  const height = rect.height * (rect.scale ?? 1.00) * scale - border;
+function draw_handles(ctx, rect) {
+  const {x, y} = to_screen(rect.x, rect.y);
+  const width  = rect.width *  (rect.scale ?? 1.00) * scale;
+  const height = rect.height * (rect.scale ?? 1.00) * scale;
 
   // draw transform boundary
   ctx.setLineDash([]);
-  ctx.lineWidth = border;
+  ctx.lineWidth = SELECT_BORDER;
   ctx.strokeStyle = "#FFF";
 
-  ctx.strokeRect(x, y, width, height);
+  ctx.strokeRect(
+    x + SELECT_BORDER / 2,
+    y + SELECT_BORDER / 2,
+    width - SELECT_BORDER,
+    height - SELECT_BORDER
+  );
 
   // draw scale handles
   ctx.fillStyle = "#F00";
 
-  for (const handle of [{x: x, y: y}, {x: x + width, y},
-                 {x: x, y: y + height}, {x: x + width, y: y + height}]) {
+  for (const handle of [{x: x, y: y},
+                        {x: x + width - SELECT_BORDER, y},
+                        {x: x, y: y + height - SELECT_BORDER},
+                        {x: x + width - SELECT_BORDER, y: y + height - SELECT_BORDER}]) {
     ctx.fillRect(
-      handle.x - SCALE_HANDLE / 2,
-      handle.y - SCALE_HANDLE / 2,
+      handle.x - (SCALE_HANDLE - SELECT_BORDER) / 2,
+      handle.y - (SCALE_HANDLE - SELECT_BORDER) / 2,
       SCALE_HANDLE,
       SCALE_HANDLE
     );
@@ -199,31 +217,28 @@ function draw_handles(ctx, rect, border) {
 
 boundsLayer.mousedown = function(x, y, button) {
   // convert to world coordinates
-  const wx = (x - VIEW_BORDER / 2) / scale + view.x,
-        wy = (y - VIEW_BORDER / 2) / scale + view.y;
+  const {x: wx, y: wy} = to_world(x, y);
 
   if (button == 0) { // left click
     // check transform handles of selection
     if (op.target) {
-      const tx = op.target.x + (VIEW_BORDER + SELECT_BORDER) / (2 * scale);
-      const ty = op.target.y + (VIEW_BORDER + SELECT_BORDER) / (2 * scale);
+      const tx = op.target.x;
+      const ty = op.target.y;
       const tw = op.target.width  * (op.target.scale ?? 1);
       const th = op.target.height * (op.target.scale ?? 1);
       
       const HW2 = SCALE_HANDLE / (scale * 2);
 
       // check scale handles
-      for (const handle of [{x: tx, y: ty}, {x: tx + tw, y: ty},
-                            {x: tx, y: ty + th}, {x: tx + tw, sy: ty + th}]) {
+      for (const handle of [{x: tx, y: ty},
+                            {x: tx + tw - SELECT_BORDER, y: ty},
+                            {x: tx, y: ty + th - SELECT_BORDER},
+                            {x: tx + tw - SELECT_BORDER, y: ty + th - SELECT_BORDER}]) {
         // AABB
-        console.log(handle.x - HW2, x, handle.x + HW2);
-
-        if (x >= handle.x - HW2 && x < handle.x + HW2
-         && y >= handle.y - HW2 && y < handle.y + HW2) {
+        if (wx >= handle.x - HW2 && wx < handle.x + HW2
+         && wy >= handle.y - HW2 && wy < handle.y + HW2) {
           console.log(`BEGIN SCALE !!!`);
           set_op(op.target, OP_SCALE, x, y);
-
-          return;
         }
       }
     }
@@ -268,8 +283,7 @@ boundsLayer.mousedown = function(x, y, button) {
 
 boundsLayer.mousemove = function(x, y, buttons) {
   // convert to world coordinates
-  const wx = (x - VIEW_BORDER / 2) / scale + view.x,
-        wy = (y - VIEW_BORDER / 2) / scale + view.y;
+  const {x: wx, y: wy} = to_world(x, y);
 
   // TODO: preview transforms here
   switch (op.type) {
@@ -294,12 +308,47 @@ boundsLayer.mouseup = function(x, y, button) {
 
 boundsLayer.draw = function(ctx) {
   // draw screens
-  /*
-  const sx = (VIEW_BORDER + SCREEN_BORDER) / 2 + (screens.x - view.x) * scale;
-  const sy = (VIEW_BORDER + SCREEN_BORDER) / 2 + (screens.y - view.y) * scale;
-  const sw = screens.width  * screens.scale * scale - SCREEN_BORDER;
-  const sh = screens.height * screens.scale * scale - SCREEN_BORDER;
+  const {x: sx, y: sy} = to_screen(screens.x, screens.y);
+  const sw = screens.width * screens.scale * scale;
+  const sh = screens.height * screens.scale * scale;
 
+  ctx.fillStyle = "#FFF5";
+
+  for (const screen of screens.screens) {
+    ctx.fillRect(
+      sx + (sw / screens.shape.x) * screen.x,
+      sy + (sh / screens.shape.y) * screen.y,
+      sw / screens.shape.x,
+      sh / screens.shape.y
+    );
+  }
+
+  // draw screens grid
+  ctx.lineWidth = SCREEN_BORDER;
+  ctx.setLineDash([1, 2]);
+  ctx.strokeStyle = "#FFF";
+  ctx.beginPath();
+
+  // vertical lines
+  for (let i = 1; i < screens.shape.x; i++) {
+    ctx.moveTo(sx + (sw / screens.shape.x) * i, sy);
+    ctx.lineTo(sx + (sw / screens.shape.x) * i, sy + sh);
+  }
+
+  // horizontal lines
+  for (let i = 1; i < screens.shape.y; i++) {
+    ctx.moveTo(sx,      sy + (sh / screens.shape.y) * i);
+    ctx.lineTo(sx + sw, sy + (sh / screens.shape.y) * i);
+  }
+
+  ctx.stroke();
+
+  // draw screens outline
+  ctx.setLineDash([]);
+  ctx.strokeRect(sx + SCREEN_BORDER / 2, sy + SCREEN_BORDER / 2, sw - SCREEN_BORDER, sh - SCREEN_BORDER);
+
+
+  /*
   ctx.fillStyle = "#FFF5";
 
   for (const screen of screens.screens) {
@@ -319,46 +368,6 @@ boundsLayer.draw = function(ctx) {
     );
   }
     */
-
-  /*
-  ctx.lineWidth = SCREEN_BORDER;
-  ctx.setLineDash([1, 2]);
-  ctx.strokeStyle = "#FFF";
-  ctx.beginPath();
-
-  // vertical lines
-  for (let i = 1; i < screens.shape.x; i++) {
-    ctx.moveTo(sx + (sw / screens.shape.x) * i, sy);
-    ctx.lineTo(sx + (sw / screens.shape.x) * i, sy + sh);
-  }
-
-  // horizontal lines
-  for (let i = 1; i < screens.shape.y; i++) {
-    ctx.moveTo(sx, sy + (sh / screens.shape.y) * i);
-    ctx.lineTo(sx + sw, sy + (sh / screens.shape.y) * i);
-  }
-
-  // draw lines
-  ctx.stroke()
-
-  // draw transform outline
-
-  ctx.setLineDash([]);
-  ctx.strokeRect(sx, sy, sw, sh);
-  /*
-  ctx.strokeRect(
-    (VIEW) + (-view.x + screens.x) * scale,
-    (-view.y + screens.y) * scale,
-    screens.width * screens.scale * scale,
-    screens.height * screens.scale * scale
-  );
-  */
-
-  // draw transform handles on selection
-  /*
-  if (op.target)
-    draw_handles(ctx, op.target, SELECT_BORDER);
-  */
 
   // draw transform handles on selection
   if (op.target)
