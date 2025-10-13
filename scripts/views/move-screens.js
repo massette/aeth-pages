@@ -11,8 +11,9 @@ const element = document.getElementById("views-stage");
 const stage = new Stage(element);
 
 // layout constants
-const VIEW_BORDER   = 0.20 * U_REM;
+const VIEW_BORDER   = 0.30 * U_REM;
 const SCREEN_BORDER = 0.10 * U_REM;
+const SELECT_BORDER = 0.15 * U_REM;
 
 const SCALE_HANDLE  = 0.50 * U_REM;
 
@@ -26,15 +27,23 @@ const view = {
 
 let scale  = 1.00;
 
-function viewClamp(x, y) {
-  return {
-    x: (stage.width < map.width * scale)
-     ? Math.min(Math.max(x, 0), map.width  - (view.width - VIEW_BORDER) / scale )
-     : (map.width  - (stage.width  - VIEW_BORDER) / scale) / 2,
-    y: (stage.height < map.height * scale)
-     ? Math.min(Math.max(y, 0), map.height - (view.height - VIEW_BORDER) / scale)
-     : (map.height - (stage.height - VIEW_BORDER) / scale) / 2,
-  };
+function update_view(x, y) {
+  x = x ?? view.x;
+  y = y ?? view.y;
+
+  view.x = (stage.width  - 2 * VIEW_BORDER < map.width  * scale)
+    ? Math.min(
+        Math.max(x, 0),
+        map.width  - (view.width  - 2 * VIEW_BORDER) / scale
+      )
+    : (map.width  - (stage.width  - 2 * VIEW_BORDER) / scale) / 2;
+
+  view.y = (stage.height - 2 * VIEW_BORDER < map.height * scale)
+    ? Math.min(
+        Math.max(y, 0),
+        map.height - (view.height - 2 * VIEW_BORDER) / scale
+      )
+    : (map.height - (stage.height - 2 * VIEW_BORDER) / scale) / 2;
 }
 
 // 
@@ -67,7 +76,7 @@ const mapLayer = new Layer();
 
 mapLayer.draw = function(ctx) {
   ctx.save()
-  ctx.translate(VIEW_BORDER / 2, VIEW_BORDER / 2);
+  ctx.translate(VIEW_BORDER, VIEW_BORDER);
 
   // apply world transforms
   ctx.scale(scale, scale);
@@ -90,12 +99,8 @@ mapLayer.resize = function(width, height, old_width, old_height) {
     scale * scaleFactor, // maintain previous zoom
     (stage.width - 2 * VIEW_BORDER) / Math.max(map.width, map.height)
   );
-
-  view.x *= scaleFactor;
-  view.y *= scaleFactor;
-
   // enforce view boundaries
-  ({ x: view.x, y: view.y } = viewClamp(view.x, view.y));
+  update_view(view.x * scaleFactor, view.y * scaleFactor);
 }
 
 mapLayer.updateMap = function(width, height) {
@@ -103,7 +108,7 @@ mapLayer.updateMap = function(width, height) {
   scale = (stage.width - 2 * VIEW_BORDER) / Math.max(map.width, map.height);
 
   // enforce view boundaries
-  ({ x: view.x, y: view.y } = viewClamp(view.x, view.y));
+  update_view();
 }
 
 /* MOUSE EVENTS */
@@ -115,13 +120,10 @@ mapLayer.wheel = function(x, y, dx, dy, ev) {
   const scaleFactor = scale / oldScale;
 
   // center transform on mouse position
-  view.x += x / oldScale - x / scale;
-  view.y += y / oldScale - y / scale;
+  update_view(view.x + x / oldScale - x / scale,
+              view.y + y / oldScale - y / scale);
 
   // TODO: more linear scaling curve
-
-  // enforce view boundaries
-  ({ x: view.x, y: view.y } = viewClamp(view.x, view.y));
 
   // scroll if at max zoom
   if (scale == oldScale) {
@@ -193,60 +195,33 @@ function draw_handles(ctx, rect, border) {
       SCALE_HANDLE
     );
   }
-
-  /*
-  // top-left
-  ctx.fillRect(
-    -view.x / scale + rect.x * scale + (border - SCALE_HANDLE) / 2,
-    -view.y / scale + rect.y * scale + (border - SCALE_HANDLE) / 2,
-    SCALE_HANDLE,
-    SCALE_HANDLE
-  );
-
-  // top-right
-  ctx.fillRect(
-    -view.x / scale + (rect.x + rect.width ) * scale + (border - SCALE_HANDLE) / 2,
-    -view.y / scale + rect.y * scale + (border - SCALE_HANDLE) / 2,
-    SCALE_HANDLE,
-    SCALE_HANDLE
-  );
-
-  // bottom-left
-  ctx.fillRect(
-    -view.x / scale + rect.x * scale + (border - SCALE_HANDLE) / 2,
-    -view.y / scale + (rect.y + rect.height) * scale + (border - SCALE_HANDLE) / 2,
-    SCALE_HANDLE,
-    SCALE_HANDLE
-  );
-
-  // bottom-right
-  ctx.fillRect(
-    -view.x / scale + (rect.x + rect.width ) * scale + (border - SCALE_HANDLE) / 2,
-    -view.y / scale + (rect.y + rect.height) * scale + (border - SCALE_HANDLE) / 2,
-    SCALE_HANDLE,
-    SCALE_HANDLE
-  );
-  */
 }
 
 boundsLayer.mousedown = function(x, y, button) {
   // convert to world coordinates
-  const wx = x / scale + view.x,
-        wy = y / scale + view.y;
+  const wx = (x - VIEW_BORDER / 2) / scale + view.x,
+        wy = (y - VIEW_BORDER / 2) / scale + view.y;
 
   if (button == 0) { // left click
     // check transform handles of selection
     if (op.target) {
-      // TODO: check rotation handle
+      const tx = op.target.x + (VIEW_BORDER + SELECT_BORDER) / (2 * scale);
+      const ty = op.target.y + (VIEW_BORDER + SELECT_BORDER) / (2 * scale);
+      const tw = op.target.width  * (op.target.scale ?? 1);
+      const th = op.target.height * (op.target.scale ?? 1);
       
-      // check scale handles
-      for (const handle of [{x: op.target.x, y: op.target.y}, {x: op.target.x + op.target.width, y: op.target.y},
-                            {x: op.target.x, y: op.target.y + op.target.width}, {x: op.target.x + op.target.width, sy: op.target.y + op.target.height}]) {
-        // AABB
-        if  (wx >= handle.x - SCALE_HANDLE / 2 && wx < handle.x + SCALE_HANDLE / 2
-          && wy >= handle.y - SCALE_HANDLE / 2 && wy < handle.y + SCALE_HANDLE / 2) {
-          console.log(`BEGIN SCALE !!! ${target}`);
+      const HW2 = SCALE_HANDLE / (scale * 2);
 
+      // check scale handles
+      for (const handle of [{x: tx, y: ty}, {x: tx + tw, y: ty},
+                            {x: tx, y: ty + th}, {x: tx + tw, sy: ty + th}]) {
+        // AABB
+        console.log(handle.x - HW2, x, handle.x + HW2);
+
+        if (x >= handle.x - HW2 && x < handle.x + HW2
+         && y >= handle.y - HW2 && y < handle.y + HW2) {
+          console.log(`BEGIN SCALE !!!`);
+          set_op(op.target, OP_SCALE, x, y);
 
           return;
         }
@@ -293,8 +268,8 @@ boundsLayer.mousedown = function(x, y, button) {
 
 boundsLayer.mousemove = function(x, y, buttons) {
   // convert to world coordinates
-  const wx = x / scale + view.x,
-        wy = y / scale + view.y;
+  const wx = (x - VIEW_BORDER / 2) / scale + view.x,
+        wy = (y - VIEW_BORDER / 2) / scale + view.y;
 
   // TODO: preview transforms here
   switch (op.type) {
@@ -304,12 +279,9 @@ boundsLayer.mousemove = function(x, y, buttons) {
       break;
 
     case OP_PAN:
-      view.x = op.start.x - x / scale + op.offset.x;
-      view.y = op.start.y - y / scale + op.offset.y;
-
-      // enforce view bounds
-      ({ x: view.x, y: view.y } = viewClamp(op.start.x - x / scale + op.offset.x,
-                                            op.start.y - y / scale + op.offset.y));
+      // 
+      update_view(op.start.x - x / scale + op.offset.x,
+                  op.start.y - y / scale + op.offset.y);
       break;
   }
 }
@@ -321,22 +293,34 @@ boundsLayer.mouseup = function(x, y, button) {
 }
 
 boundsLayer.draw = function(ctx) {
-  // draw transform handles on selection
-  if (op.target)
-    draw_handles(ctx, op.target, SCREEN_BORDER);
-
   // draw screens
+  /*
+  const sx = (VIEW_BORDER + SCREEN_BORDER) / 2 + (screens.x - view.x) * scale;
+  const sy = (VIEW_BORDER + SCREEN_BORDER) / 2 + (screens.y - view.y) * scale;
+  const sw = screens.width  * screens.scale * scale - SCREEN_BORDER;
+  const sh = screens.height * screens.scale * scale - SCREEN_BORDER;
+
   ctx.fillStyle = "#FFF5";
 
   for (const screen of screens.screens) {
     ctx.fillRect(
+      sx + (sw / screens.shape.x) * screen.x,
+      sy + (sh / screens.shape.y) * screen.y,
+      sw / screens.shape.x,
+      sh / screens.shape.y
+    );
+    */
+
+/*
       (-view.x + screens.x + screen.x * SC_WIDTH  * screens.scale) * scale,
       (-view.y + screens.y + screen.y * SC_HEIGHT * screens.scale) * scale,
       SC_WIDTH  * screens.scale * scale,
       SC_HEIGHT * screens.scale * scale
     );
   }
+    */
 
+  /*
   ctx.lineWidth = SCREEN_BORDER;
   ctx.setLineDash([1, 2]);
   ctx.strokeStyle = "#FFF";
@@ -344,23 +328,41 @@ boundsLayer.draw = function(ctx) {
 
   // vertical lines
   for (let i = 1; i < screens.shape.x; i++) {
-    ctx.moveTo((-view.x + screens.x + i * SC_WIDTH * screens.scale) * scale,
-               (-view.y + screens.y) * scale);
-    ctx.lineTo((-view.x + screens.x + i * SC_WIDTH * screens.scale) * scale,
-               (-view.y + screens.y + screens.height * screens.scale) * scale);
+    ctx.moveTo(sx + (sw / screens.shape.x) * i, sy);
+    ctx.lineTo(sx + (sw / screens.shape.x) * i, sy + sh);
   }
 
   // horizontal lines
   for (let i = 1; i < screens.shape.y; i++) {
-    // TODO
-    ctx.moveTo((-view.x + screens.x) * scale,
-               (-view.y + screens.y + i * SC_HEIGHT * screens.scale) * scale);
-    ctx.lineTo((-view.x + screens.x + screens.width * screens.scale) * scale,
-               (-view.y + screens.y + i * SC_HEIGHT * screens.scale) * scale);
+    ctx.moveTo(sx, sy + (sh / screens.shape.y) * i);
+    ctx.lineTo(sx + sw, sy + (sh / screens.shape.y) * i);
   }
 
   // draw lines
   ctx.stroke()
+
+  // draw transform outline
+
+  ctx.setLineDash([]);
+  ctx.strokeRect(sx, sy, sw, sh);
+  /*
+  ctx.strokeRect(
+    (VIEW) + (-view.x + screens.x) * scale,
+    (-view.y + screens.y) * scale,
+    screens.width * screens.scale * scale,
+    screens.height * screens.scale * scale
+  );
+  */
+
+  // draw transform handles on selection
+  /*
+  if (op.target)
+    draw_handles(ctx, op.target, SELECT_BORDER);
+  */
+
+  // draw transform handles on selection
+  if (op.target)
+    draw_handles(ctx, op.target, SELECT_BORDER)
 
   // draw view border
   ctx.strokeStyle = "#000";
@@ -368,14 +370,16 @@ boundsLayer.draw = function(ctx) {
   ctx.setLineDash([]);
 
   ctx.strokeRect(
-    Math.max(VIEW_BORDER / 2, -view.x * scale),
-    Math.max(VIEW_BORDER / 2, -view.y * scale),
-    (stage.width  < map.width  * scale + 2 * VIEW_BORDER)
-      ? stage.width - VIEW_BORDER
-      : map.width * scale + VIEW_BORDER,
-    (stage.height < map.height * scale + 2 * VIEW_BORDER)
-      ? stage.height - VIEW_BORDER
-      : map.height * scale + VIEW_BORDER
+    VIEW_BORDER / 2 - Math.min(0, view.x) * scale,
+    VIEW_BORDER / 2 - Math.min(0, view.y) * scale,
+    Math.min(
+      map.width  * scale + VIEW_BORDER,
+      stage.width - VIEW_BORDER
+    ),
+    Math.min(
+      map.height * scale + VIEW_BORDER,
+      stage.height - VIEW_BORDER
+    )
   );
 }
 
