@@ -66,12 +66,19 @@ const OP_TRANS = 1;
 const OP_SCALE = 2;
 const OP_PAN   = 3;
 
+const LEFT  = 0;
+const RIGHT = 1;
+const TOP    = 2;
+const BOTTOM = 3;
+
 const op = {
   type  : OP_NONE,
   target: null,
   
-  start : {x: 0, y: 0},
+  start : {x: 0, y: 0, scale: 1},
   offset: {x: 0, y: 0},
+
+  anchor: {x: LEFT, y: TOP},
 };
 
 function set_op(target, type, x, y) {
@@ -230,14 +237,31 @@ boundsLayer.mousedown = function(x, y, button) {
       const HW2 = SCALE_HANDLE / (scale * 2);
 
       // check scale handles
-      for (const handle of [{x: tx, y: ty},
-                            {x: tx + tw - SELECT_BORDER, y: ty},
-                            {x: tx, y: ty + th - SELECT_BORDER},
-                            {x: tx + tw - SELECT_BORDER, y: ty + th - SELECT_BORDER}]) {
+      for (const handle of [{x: tx, y: ty,
+                             ax: RIGHT, ay: BOTTOM},
+                            {x: tx + tw - SELECT_BORDER, y: ty,
+                             ax: LEFT , ay: BOTTOM},
+                            {x: tx, y: ty + th - SELECT_BORDER,
+                             ax: RIGHT, ay: TOP},
+                            {x: tx + tw - SELECT_BORDER, y: ty + th - SELECT_BORDER,
+                             ax: LEFT , ay: TOP}]) {
         // AABB
         if (wx >= handle.x - HW2 && wx < handle.x + HW2
          && wy >= handle.y - HW2 && wy < handle.y + HW2) {
-          console.log(`BEGIN SCALE !!!`);
+          // begin scale
+          op.type   = OP_SCALE;
+          op.target = screens;
+
+          op.anchor.x = handle.ax;
+          op.anchor.y = handle.ay;
+
+          op.start.x = screens.x;
+          op.start.y = screens.y;
+          op.start.scale = screens.scale;
+
+          op.offset.x = (wx - handle.x);
+          op.offset.y = (wy - handle.y);
+
           set_op(op.target, OP_SCALE, x, y);
         }
       }
@@ -253,10 +277,19 @@ boundsLayer.mousedown = function(x, y, button) {
 
         if  (wx >= sx && wx < sx + sw
           && wy >= sy && wy < sy + sh) {
+          // update peek
           console.log(`PEEK SC0${i}`);
-          console.log(`BEGIN TRANS !!! ${screens}`);
 
-          set_op(screens, OP_TRANS, wx, wy);
+          // begin translate
+          op.type   = OP_TRANS;
+          op.target = screens;
+          
+          op.start.x = screens.x;
+          op.start.y = screens.y;
+
+          op.offset.x = (wx - screens.x);
+          op.offset.y = (wy - screens.y);
+                  
           break;
         }
       }
@@ -288,8 +321,43 @@ boundsLayer.mousemove = function(x, y, buttons) {
   // TODO: preview transforms here
   switch (op.type) {
     case OP_TRANS:
-      op.target.x = wx - op.offset.x;
-      op.target.y = wy - op.offset.y;
+      //
+      op.target.scale = Math.min(
+        op.target.scale,
+        map.width / op.target.width,
+        map.height / op.target.height
+      );
+
+      op.target.x = Math.min(
+        Math.max(0, wx - op.offset.x),
+        map.width - op.target.width  * op.target.scale
+      );
+      op.target.y = Math.min(
+        Math.max(0, wy - op.offset.y),
+        map.height - op.target.height * op.target.scale
+      );
+
+      break;
+
+    case OP_SCALE:
+      const ax = (op.anchor.x == LEFT) ? op.start.x : op.start.x + op.target.width  * op.start.scale;
+      const ay = (op.anchor.y == TOP ) ? op.start.y : op.start.y + op.target.height * op.start.scale;
+
+      op.target.scale = Math.min(
+        Math.max(
+          Math.abs(ax - wx) / op.target.width,
+          Math.abs(op.start.y - wy) / op.target.height
+        ),
+        ((op.anchor.x == LEFT) ? map.width  - ax : ax) / op.target.width ,
+        ((op.anchor.y == TOP ) ? map.height - ay : ay) / op.target.height
+      );
+
+      if (op.anchor.x == RIGHT) 
+        op.target.x = ax - op.target.width * op.target.scale;
+
+      if (op.anchor.y == BOTTOM)
+        op.target.y = ay - op.target.height * op.target.scale;
+
       break;
 
     case OP_PAN:
