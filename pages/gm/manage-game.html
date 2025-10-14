@@ -13,6 +13,7 @@
     <script type="module" src="/scripts/canvas.js"></script>
     <script type="module" src="/scripts/map.js"></script>
     <script type="module" src="/scripts/views/move-screens.js"></script>
+    <script type="module" src="/scripts/views/move-tokens.js"></script>
 
     <div class="hidden">
       <input id="map-upload" type="file" accept="image/*">
@@ -21,7 +22,7 @@
     <div id="layout">
       <div id="views" class="safe column">
         <div id="views-stage"></div>
-        <button id="map-select" class="button">Select...</button>
+        <button id="map-select" class="button">Change Map...</button>
       </div>
 
       <div id="tokens" class="column">
@@ -29,8 +30,8 @@
           <div id="widgets-top"><!-- canvas --></div>
           <div id="tokens-stage" ><!-- canvas --></div>
           
-          <button class="button" onclick="add_token">Select...</button>
-          <button class="button" onclick="add_token">Upload...</button>
+          <button class="button">...</button>
+          <button class="button">Add token...</button>
         </div>
 
         <div id="widgets">

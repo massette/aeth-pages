@@ -7,12 +7,27 @@ export const stage = new Stage(element);
 
 const mapLayer = new Layer();
 
-export const peek = {
-  x: 1167,
-  y: 656,
-  width: 1166,
-  height: 656,
+// screen properties
+const SC_WIDTH  = 1024;
+const SC_HEIGHT = 600;
+
+const peek = {
+  x: 0,
+  y: 0,
+  width: 10,
+  height: 10,
 };
+
+export function set_peek(screens, i) {
+  const sc = screens.screens[i];
+
+  peek.x = screens.x + sc.x * SC_WIDTH  * screens.scale;
+  peek.y = screens.y + sc.y * SC_HEIGHT * screens.scale;
+  peek.width  = SC_WIDTH  * screens.scale;
+  peek.height = SC_HEIGHT * screens.scale;
+
+  stage.render();
+}
 
 mapLayer.draw = function(ctx) {
   ctx.drawImage(map.image, peek.x, peek.y, peek.width, peek.height, 0, 0, stage.width, stage.height);

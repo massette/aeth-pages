@@ -1,6 +1,7 @@
 import { Stage, Layer } from "/scripts/canvas.js";
 import map from "/scripts/map.js";
-import { openMapsModal, uploadMap } from "/scripts/calls.js"
+import { openMapsModal, uploadMap } from "/scripts/calls.js";
+import { set_peek } from "/scripts/views/move-tokens.js";
 
 /* CONSTANTS */
 // unit constants
@@ -87,6 +88,7 @@ function set_op(target, type, x, y) {
   
   op.start.x = target.x;
   op.start.y = target.y;
+  op.start.scale = target.scale;
 
   op.offset.x = (x - target.x);
   op.offset.y = (y - target.y);
@@ -175,6 +177,8 @@ const screens = {
   scale: 1.00,
 };
 
+let currentScreen = 0;
+
 boundsLayer.updateMap = function(ctx) {
   // default transforms
   screens.x = 0;
@@ -207,7 +211,7 @@ function draw_handles(ctx, rect) {
   );
 
   // draw scale handles
-  ctx.fillStyle = "#F00";
+  ctx.fillStyle = "#FFF";
 
   for (const handle of [{x: x, y: y},
                         {x: x + width - SELECT_BORDER, y},
@@ -234,7 +238,7 @@ boundsLayer.mousedown = function(x, y, button) {
       const tw = op.target.width  * (op.target.scale ?? 1);
       const th = op.target.height * (op.target.scale ?? 1);
       
-      const HW2 = SCALE_HANDLE / (scale * 2);
+      const HW2 = 1.5 * SCALE_HANDLE / (scale * 2);
 
       // check scale handles
       for (const handle of [{x: tx, y: ty,
@@ -249,20 +253,10 @@ boundsLayer.mousedown = function(x, y, button) {
         if (wx >= handle.x - HW2 && wx < handle.x + HW2
          && wy >= handle.y - HW2 && wy < handle.y + HW2) {
           // begin scale
-          op.type   = OP_SCALE;
-          op.target = screens;
+          set_op(op.target, OP_SCALE, wx, wy);
 
           op.anchor.x = handle.ax;
           op.anchor.y = handle.ay;
-
-          op.start.x = screens.x;
-          op.start.y = screens.y;
-          op.start.scale = screens.scale;
-
-          op.offset.x = (wx - handle.x);
-          op.offset.y = (wy - handle.y);
-
-          set_op(op.target, OP_SCALE, x, y);
         }
       }
     }
@@ -278,17 +272,11 @@ boundsLayer.mousedown = function(x, y, button) {
         if  (wx >= sx && wx < sx + sw
           && wy >= sy && wy < sy + sh) {
           // update peek
-          console.log(`PEEK SC0${i}`);
+          set_peek(screens, i);
+          currentScreen = i;
 
           // begin translate
-          op.type   = OP_TRANS;
-          op.target = screens;
-          
-          op.start.x = screens.x;
-          op.start.y = screens.y;
-
-          op.offset.x = (wx - screens.x);
-          op.offset.y = (wy - screens.y);
+          set_op(screens, OP_TRANS, wx, wy);
                   
           break;
         }
@@ -366,11 +354,12 @@ boundsLayer.mousemove = function(x, y, buttons) {
                   op.start.y - y / scale + op.offset.y);
       break;
   }
+
+  set_peek(screens, currentScreen);
 }
 
 boundsLayer.mouseup = function(x, y, button) {
   // TODO: resolve transform here
-  console.log("Resolve.");
   op.type   = OP_NONE;
 }
 
