@@ -1,4 +1,6 @@
 let map = {
+  id: "",
+
   image: new Image(),
   width: 0,
   height: 0,
@@ -27,7 +29,8 @@ map.image.addEventListener("load", function(ev) {
   }
 });
 
-  // TODO: fetch active map from server
+// TODO: fetch active map from server
+map.id = "camp";
 map.image.src = "/api/files/images/maps/camp";
 
 export default map;

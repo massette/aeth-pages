@@ -1,6 +1,17 @@
 import { Stage, Layer } from "/scripts/canvas.js";
 import map from "/scripts/map.js";
 
+/* CONSTANTS */
+const style = getComputedStyle(document.body);
+
+// unit constants
+const U_REM = parseFloat(style.fontSize);
+const VIEW_BORDER   = 0.20 * U_REM;
+
+//
+const COLOR_FG = style.getPropertyValue("--color-fg");
+const COLOR_BG = style.getPropertyValue("--color-bg");
+
 /* */
 const element = document.getElementById("tokens-stage");
 export const stage = new Stage(element);
@@ -18,7 +29,7 @@ const peek = {
   height: 10,
 };
 
-export function set_peek(screens, i) {
+export function setPeek(screens, i) {
   const sc = screens.screens[i];
 
   peek.x = screens.x + sc.x * SC_WIDTH  * screens.scale;
@@ -31,6 +42,18 @@ export function set_peek(screens, i) {
 
 mapLayer.draw = function(ctx) {
   ctx.drawImage(map.image, peek.x, peek.y, peek.width, peek.height, 0, 0, stage.width, stage.height);
+
+  // draw view border
+  ctx.strokeStyle = COLOR_FG;
+  ctx.lineWidth = VIEW_BORDER;
+  ctx.setLineDash([]);
+
+  ctx.strokeRect(
+    VIEW_BORDER / 2,
+    VIEW_BORDER / 2,
+    stage.width - VIEW_BORDER,
+    stage.height - VIEW_BORDER
+  );
 }
 
 stage.addLayer(mapLayer);

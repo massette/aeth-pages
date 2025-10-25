@@ -1,22 +1,28 @@
 import { Stage, Layer } from "/scripts/canvas.js";
 import map from "/scripts/map.js";
 import { openMapsModal, uploadMap } from "/scripts/calls.js";
-import { set_peek } from "/scripts/views/move-tokens.js";
+import { setPeek } from "/scripts/views/move-tokens.js";
 
 /* CONSTANTS */
+const style = getComputedStyle(document.body);
+
 // unit constants
-const U_REM = parseFloat(getComputedStyle(document.documentElement).fontSize);
+const U_REM = parseFloat(style.fontSize);
 
 /*  */
 const element = document.getElementById("views-stage");
 const stage = new Stage(element);
 
 // layout constants
-const VIEW_BORDER   = 0.30 * U_REM;
+const VIEW_BORDER   = 0.20 * U_REM;
 const SCREEN_BORDER = 0.10 * U_REM;
 const SELECT_BORDER = 0.20 * U_REM;
 
 const SCALE_HANDLE  = 0.50 * U_REM;
+
+//
+const COLOR_FG = style.getPropertyValue("--color-fg");
+const COLOR_BG = style.getPropertyValue("--color-bg");
 
 // view transform
 const view = {
@@ -28,7 +34,7 @@ const view = {
 
 let scale  = 1.00;
 
-function update_view(x, y) {
+function updateView(x, y) {
   x = x ?? view.x;
   y = y ?? view.y;
 
@@ -47,14 +53,14 @@ function update_view(x, y) {
     : (map.height - (stage.height - 2 * VIEW_BORDER) / scale) / 2;
 }
 
-function to_world(x, y) {
+function toWorld(x, y) {
   return {
     x: (x - VIEW_BORDER) / scale + view.x,
     y: (y - VIEW_BORDER) / scale + view.y,
   }
 }
 
-function to_screen(wx, wy) {
+function toScreen(wx, wy) {
   return {
     x: (wx - view.x) * scale + VIEW_BORDER,
     y: (wy - view.y) * scale + VIEW_BORDER,
@@ -82,7 +88,7 @@ const op = {
   anchor: {x: LEFT, y: TOP},
 };
 
-function set_op(target, type, x, y) {
+function setOp(target, type, x, y) {
   op.type   = type;
   op.target = target;
   
@@ -123,7 +129,7 @@ mapLayer.resize = function(width, height, old_width, old_height) {
     (stage.width - 2 * VIEW_BORDER) / Math.max(map.width, map.height)
   );
   // enforce view boundaries
-  update_view(view.x * scaleFactor, view.y * scaleFactor);
+  updateView(view.x * scaleFactor, view.y * scaleFactor);
 }
 
 mapLayer.updateMap = function(width, height) {
@@ -131,7 +137,7 @@ mapLayer.updateMap = function(width, height) {
   scale = (stage.width - 2 * VIEW_BORDER) / Math.max(map.width, map.height);
 
   // enforce view boundaries
-  update_view();
+  updateView();
 }
 
 /* MOUSE EVENTS */
@@ -143,7 +149,7 @@ mapLayer.wheel = function(x, y, dx, dy, ev) {
   const scaleFactor = scale / oldScale;
 
   // center transform on mouse position
-  update_view(view.x + x / oldScale - x / scale,
+  updateView(view.x + x / oldScale - x / scale,
               view.y + y / oldScale - y / scale);
 
   // TODO: more linear scaling curve
@@ -166,14 +172,14 @@ const SC_HEIGHT = 600;
 // screen positions
 const screens = {
   // screens shape
-  screens: [{x:  0, y: 0}, {x: 1, y: 0},
-            {x:  1, y: 1}, {x: 2, y: 1}],
-  shape: { x: 3, y: 2 },
+  screens: [{x:  0, y: 0}, {x: 0, y: 1},
+            {x:  1, y: 1}, {x: 1, y: 2}],
+  shape: { x: 2, y: 3 },
   // rect
   x: 0,
   y: 0,
-  width : 3 * SC_WIDTH,
-  height: 2 * SC_HEIGHT,
+  width : 2 * SC_WIDTH,
+  height: 3 * SC_HEIGHT,
   scale: 1.00,
 };
 
@@ -193,15 +199,15 @@ boundsLayer.updateMap = function(ctx) {
 }
 
 /*  */
-function draw_handles(ctx, rect) {
-  const {x, y} = to_screen(rect.x, rect.y);
+function drawHandles(ctx, rect) {
+  const {x, y} = toScreen(rect.x, rect.y);
   const width  = rect.width *  (rect.scale ?? 1.00) * scale;
   const height = rect.height * (rect.scale ?? 1.00) * scale;
 
   // draw transform boundary
   ctx.setLineDash([]);
   ctx.lineWidth = SELECT_BORDER;
-  ctx.strokeStyle = "#FFF";
+  ctx.strokeStyle = "#785EF0";
 
   ctx.strokeRect(
     x + SELECT_BORDER / 2,
@@ -211,7 +217,7 @@ function draw_handles(ctx, rect) {
   );
 
   // draw scale handles
-  ctx.fillStyle = "#FFF";
+  ctx.fillStyle = "#785EF0";
 
   for (const handle of [{x: x, y: y},
                         {x: x + width - SELECT_BORDER, y},
@@ -228,7 +234,7 @@ function draw_handles(ctx, rect) {
 
 boundsLayer.mousedown = function(x, y, button) {
   // convert to world coordinates
-  const {x: wx, y: wy} = to_world(x, y);
+  const {x: wx, y: wy} = toWorld(x, y);
 
   if (button == 0) { // left click
     // check transform handles of selection
@@ -253,7 +259,7 @@ boundsLayer.mousedown = function(x, y, button) {
         if (wx >= handle.x - HW2 && wx < handle.x + HW2
          && wy >= handle.y - HW2 && wy < handle.y + HW2) {
           // begin scale
-          set_op(op.target, OP_SCALE, wx, wy);
+          setOp(op.target, OP_SCALE, wx, wy);
 
           op.anchor.x = handle.ax;
           op.anchor.y = handle.ay;
@@ -272,11 +278,11 @@ boundsLayer.mousedown = function(x, y, button) {
         if  (wx >= sx && wx < sx + sw
           && wy >= sy && wy < sy + sh) {
           // update peek
-          set_peek(screens, i);
+          setPeek(screens, i);
           currentScreen = i;
 
           // begin translate
-          set_op(screens, OP_TRANS, wx, wy);
+          setOp(screens, OP_TRANS, wx, wy);
                   
           break;
         }
@@ -304,7 +310,7 @@ boundsLayer.mousedown = function(x, y, button) {
 
 boundsLayer.mousemove = function(x, y, buttons) {
   // convert to world coordinates
-  const {x: wx, y: wy} = to_world(x, y);
+  const {x: wx, y: wy} = toWorld(x, y);
 
   // TODO: preview transforms here
   switch (op.type) {
@@ -350,12 +356,12 @@ boundsLayer.mousemove = function(x, y, buttons) {
 
     case OP_PAN:
       // 
-      update_view(op.start.x - x / scale + op.offset.x,
+      updateView(op.start.x - x / scale + op.offset.x,
                   op.start.y - y / scale + op.offset.y);
       break;
   }
 
-  set_peek(screens, currentScreen);
+  setPeek(screens, currentScreen);
 }
 
 boundsLayer.mouseup = function(x, y, button) {
@@ -365,11 +371,11 @@ boundsLayer.mouseup = function(x, y, button) {
 
 boundsLayer.draw = function(ctx) {
   // draw screens
-  const {x: sx, y: sy} = to_screen(screens.x, screens.y);
+  const {x: sx, y: sy} = toScreen(screens.x, screens.y);
   const sw = screens.width * screens.scale * scale;
   const sh = screens.height * screens.scale * scale;
 
-  ctx.fillStyle = "#FFF5";
+  ctx.fillStyle = "#785EF055";
 
   for (const screen of screens.screens) {
     ctx.fillRect(
@@ -383,7 +389,7 @@ boundsLayer.draw = function(ctx) {
   // draw screens grid
   ctx.lineWidth = SCREEN_BORDER;
   ctx.setLineDash([1, 2]);
-  ctx.strokeStyle = "#FFF";
+  ctx.strokeStyle = "#785EF0";
   ctx.beginPath();
 
   // vertical lines
@@ -428,10 +434,10 @@ boundsLayer.draw = function(ctx) {
 
   // draw transform handles on selection
   if (op.target)
-    draw_handles(ctx, op.target, SELECT_BORDER)
+    drawHandles(ctx, op.target, SELECT_BORDER)
 
   // draw view border
-  ctx.strokeStyle = "#000";
+  ctx.strokeStyle = COLOR_FG;
   ctx.lineWidth = VIEW_BORDER;
   ctx.setLineDash([]);
 
@@ -456,57 +462,7 @@ map.register(stage);
 const mapSelect = document.getElementById("map-select");
 mapSelect.addEventListener("click", openMapsModal);
 
+/*
 const mapUpload = document.getElementById("map-upload");
 mapUpload.addEventListener("change", uploadMap);
-
-/*
-// screen properties
-// const peek = new Rect(870, 2150, 1366, 768);
-// peek.scale = 1.2;
-
-/* VIEWS DRAW *
-const viewsBounds = new Layer();
-
-viewsBounds.draw = (ctx) => {
-  ctx.save();
-  // apply world transforms
-  ctx.translate(-viewsOffset.x, -viewsOffset.y);
-  ctx.scale(viewsScale, viewsScale);
-
-
-  // peek.draw(ctx);
-
-  if (selection)
-    selection.drawHandles(ctx);
-
-  ctx.restore();
-
-  // draw border
-  ctx.strokeStyle = "#000";
-  ctx.lineWidth = 0.2 * rem;
-  ctx.strokeRect(
-    Math.max(-viewsOffset.x, ctx.lineWidth / 2),
-    Math.max(-viewsOffset.y, ctx.lineWidth / 2),
-    Math.min(mapImage.naturalWidth * viewsScale,
-             viewsStage.width - ctx.lineWidth,
-             -viewsOffset.x + mapImage.naturalWidth * viewsScale - ctx.lineWidth / 2,
-             viewsStage.width + viewsOffset.x - ctx.lineWidth / 2),
-    Math.min(mapImage.naturalHeight * viewsScale,
-             viewsStage.height - ctx.lineWidth,
-             -viewsOffset.y + mapImage.naturalHeight * viewsScale - ctx.lineWidth / 2,
-             viewsStage.height + viewsOffset.y - ctx.lineWidth / 2));
-}
-
-viewsStage.addLayer(viewsMap);
-viewsStage.addLayer(viewsBounds);
-
-/* TOKENS DRAWING *
-const tokensLayer = new Layer();
-
-tokensLayer.draw = (ctx) => {
-  // ctx.drawImage(mapImage, peek.x, peek.y, peek.width * peek.scale, peek.height * peek.scale,
-  //                        0, 0, tokensStage.width, tokensStage.height);
-}
-
-tokensStage.addLayer(tokensLayer);
 */
