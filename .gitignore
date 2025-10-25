@@ -3,7 +3,9 @@
 
 # ignore test server stuff
 node_modules/
-#images/
 index.js
 package.json
 package-lock.json
+
+# ignore silly images
+images/test/
