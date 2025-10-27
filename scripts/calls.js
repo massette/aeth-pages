@@ -33,7 +33,7 @@ export async function uploadMap(map) {
   return response;
 }
 
-function setMap(map) {
+export async function setMap(map) {
   // set active map server side
   fetch(`/api/maps/{id}/is-active?setter=gamemaster}`, { method: "POST" });
 
@@ -42,9 +42,30 @@ function setMap(map) {
   activeMap.image.src = `/api/Files/${map.FileId}`;
 }
 
-async function getMaps() {
+export async function getMaps() {
   const response = await fetch("/api/maps");
   return await response.json();
+}
+
+// screen properties
+const SC_WIDTH  = 1024;
+const SC_HEIGHT = 600;
+
+export async function setViewport(screens) {
+  const x = screens.x + screens.screens[0].x * SC_WIDTH  * screens.scale;
+  const y = screens.y + screens.screens[0].y * SC_HEIGHT * screens.scale;
+  const width  = SC_WIDTH  * screens.scale;
+  const height = SC_HEIGHT * screens.scale;
+
+  const response = await fetch("/api/maps/set-viewport/noid", {
+    method: "POST",
+    headers: {
+    "Content-Type": "application/json",
+    },
+    body: JSON.stringify({x, y, width, height}),
+  });
+
+  return response;
 }
 
 async function getImages() {

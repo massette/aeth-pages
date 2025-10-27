@@ -1,6 +1,6 @@
 import { Stage, Layer } from "/scripts/canvas.js";
 import map from "/scripts/map.js";
-import { openMapsModal, uploadMap } from "/scripts/calls.js";
+import { openMapsModal, uploadMap, setViewport } from "/scripts/calls.js";
 import { setPeek } from "/scripts/views/move-tokens.js";
 
 /* CONSTANTS */
@@ -172,14 +172,13 @@ const SC_HEIGHT = 600;
 // screen positions
 const screens = {
   // screens shape
-  screens: [{x:  0, y: 0}, {x: 0, y: 1},
-            {x:  1, y: 1}, {x: 1, y: 2}],
-  shape: { x: 2, y: 3 },
+  screens: [{x:  0, y: 0}],
+  shape: { x: 1, y: 1 },
   // rect
   x: 0,
   y: 0,
-  width : 2 * SC_WIDTH,
-  height: 3 * SC_HEIGHT,
+  width : 1 * SC_WIDTH,
+  height: 1 * SC_HEIGHT,
   scale: 1.00,
 };
 
@@ -366,6 +365,8 @@ boundsLayer.mousemove = function(x, y, buttons) {
 
 boundsLayer.mouseup = function(x, y, button) {
   // TODO: resolve transform here
+  setViewport(screens);
+
   op.type   = OP_NONE;
 }
 
