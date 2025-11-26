@@ -1,3 +1,5 @@
+import { registerStage } from "/scripts/call/maps.js";
+
 export class Stage {
     constainer;
 
@@ -40,13 +42,12 @@ export class Stage {
         }
     }
 
-    resize(ev) {
-        const oldWidth  = this.width;
-        const oldHeight = this.height;
+    async updateSize(width, height) {
+        await this.call("resize", width, height);
 
         // update dimensions
-        this.width  = this.container.clientWidth;
-        this.height = this.container.clientHeight;
+        this.width  = width;
+        this.height = height;
 
         // update layer dimensions
         for (const layer of this.layers) {
@@ -58,34 +59,22 @@ export class Stage {
         this.render()
     }
     
-    call(fn, ...args) {
+    async call(fn, ...args) {
         // try to call function on layers
-        for (const layer of this.layers) {
-            if (layer[fn])
-                layer[fn](...args);
-        }
+        await Promise.all(this.layers.map(layer =>
+            (layer[fn]) ? layer[fn](...args)
+                        : Promise.resolve()));
+
 
         // try to call function on self
         if (this[fn])
-            this[fn](...args);
+            await this[fn](...args);
     }
 
-    updateMouse(x, y, buttons) {
+    async updateMouse(x, y, buttons) {
         // bound click coords
         const in_bounds = (x >= 0) && (x <= this.width)
                        && (y >= 0) && (y <= this.height);
-
-        if (!in_bounds) {
-            x = Math.min(
-                Math.max(x, 0),
-                this.width,
-            );
-
-            y = Math.min(
-                Math.max(y, 0),
-                this.height,
-            );
-        }
 
         // update position
         this.mouse.dx = x - this.mouse.x;
@@ -94,6 +83,11 @@ export class Stage {
         this.mouse.x  = x;
         this.mouse.y  = y;
 
+        // ignore mouse movements originating out of bounds
+        const moved = (this.mouse.buttons || in_bounds) && (this.mouse.dx || this.mouse.dy);
+        if (moved)
+            await this.call("mousemove", this.mouse);
+
         // update buttons
         const pressed  = in_bounds ? (buttons & ~this.mouse.buttons) : 0; // 0 -> 1
         const released = (~buttons & this.mouse.buttons); // 1 -> 0
@@ -101,15 +95,10 @@ export class Stage {
 
         // ignore clicks that start out of bounds
         if (pressed) 
-            this.call("mousedown", this.mouse, pressed);
+            await this.call("mousedown", this.mouse, pressed);
 
         if (released)
-            this.call("mouseup", this.mouse, released);
-
-        // ignore mouse movements originating out of bounds
-        const moved = (this.mouse.buttons || in_bounds) && (this.mouse.dx || this.mouse.dy);
-        if (moved)
-            this.call("mousemove", this.mouse);
+            await this.call("mouseup", this.mouse, released);
 
         // check for changes
         if (pressed || released || moved) {
@@ -118,12 +107,12 @@ export class Stage {
         }
     }
 
-    attach(id) {
+    async attach(id) {
         this.container = document.getElementById(id);
         this.container.classList.add("canvas-stage");
 
         // force resize to new size
-        this.resize()
+        await this.call("updateSize", this.container.clientWidth, this.container.clientHeight)
         
         // attach all layers
         for (const layer of this.layers) {
@@ -131,22 +120,19 @@ export class Stage {
         }
 
         // local input events
-        this.container.addEventListener("mousedown", (ev) => {
-            // update mouse state
-            this.updateMouse(ev.offsetX, ev.offsetY, ev.buttons);
+        this.container.addEventListener("mousedown", (ev) =>
+            this.updateMouse(ev.offsetX, ev.offsetY, ev.buttons));
 
-            this.call("mousedown", this.mouse, ev);
-            this.call("mouseup", this.mouse, ev);
-        });
-
-        this.container.addEventListener("wheel", (ev) => {
-            this.call("wheel", this.mouse, ev);
+        this.container.addEventListener("wheel", async (ev) => {
+            await this.call("wheel", this.mouse, ev)
+            this.render();
         });
 
         // page input events
         window.addEventListener("mouseup", (ev) => {
             // update mouse state
             const rect = this.container.getBoundingClientRect();
+
             this.updateMouse(
                 ev.clientX - rect.left,
                 ev.clientY - rect.top,
@@ -158,6 +144,7 @@ export class Stage {
         window.addEventListener("mousemove", (ev) => {
             // update mouse state
             const rect = this.container.getBoundingClientRect();
+
             this.updateMouse(
                 ev.clientX - rect.left,
                 ev.clientY - rect.top,
@@ -165,10 +152,12 @@ export class Stage {
             );
         });
 
-        window.addEventListener("resize", (ev) => {
-            this.call("resize",
-                this.container.clientWidth, this.container.clientHeight, this.width, this.height, ev);
+        window.addEventListener("resize", async (ev) => {
+            await this.call("updateSize",
+                this.container.clientWidth, this.container.clientHeight);
         });
+
+        registerStage(this);
     }
 }
 
