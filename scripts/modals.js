@@ -1,5 +1,6 @@
 import { getFiles, getFile, setFile, getFileImage } from "/scripts/call/files.js";
 import { getMaps, getMap, setMap, getActive } from "/scripts/call/maps.js";
+import { getTokens, getToken, setToken } from "/scripts/call/tokens.js";
 
 const overlay = document.getElementById("overlay");
 
@@ -357,3 +358,61 @@ export const selectMap = new Modal("SELECT: Map", async (modal) => {
         });
     });
 }, async data => getMap(data.get("MapId")));
+
+export const newToken = new Modal("NEW: Token", async (modal) => {
+    const form = modal.addForm();
+    form.addField("TokenId", "text", "Token ID");
+    form.addField("FileId", async () => {
+        const file = await selectFile.open(modal);
+        return file.FileId;
+    }, "File");
+}, async (data) => setToken({
+    "TokenId": data.get("TokenId"),
+    "FileId": data.get("FileId"),
+}));
+
+export const selectToken = new Modal("SELECT: Token", async (modal) => {
+    const tokens = await getTokens();
+    const files = tokens.reduce((acc, token) => ({
+        ...acc,
+        [token.TokenId]: token.FileId,
+    }), {});
+
+    let preview = modal.addPreview(tokens[0].FileId);
+    const form = modal.addRadioList(tokens.map(token => token.TokenId), "TokenId", tokens[0].TokenId);
+    const uploadButton = modal.addRadioItem("Upload new token...", async () => {
+        // add to radio list
+        const token = await newToken.open(modal);
+        const tokenButton = modal.addRadioItem(token.TokenId, token.TokenId, "TokenId", false);
+
+        files[token.TokenId] = token.FileId;
+
+        // move upload button to end of list
+        form.appendChild(uploadButton);
+        tokenButton.firstChild.click();
+    });
+
+    // update preview
+    form.addEventListener("input", (ev) => {
+        const id = (new FormData(form)).get("TokenId");
+
+        getFileImage(files[id]).then(({image}) => {
+            preview.replaceWith(image);
+            preview = image;
+        });
+    });
+}, async data => getToken(data.get("TokenId")));
+
+export const newEntity = new Modal("NEW: Entity", async (modal) => {
+    const form = modal.addForm();
+    form.addField("x", "number", "X");
+    form.addField("y", "number", "Y");
+    form.addField("TokenId", async () => {
+        const token = await selectToken.open(modal);
+        return token.TokenId;
+    }, "Token");
+}, async (data) => createEntity({
+    "TokenId": data.get("TokenId"),
+    "x": data.get("x"),
+    "y": data.get("y"),
+}));

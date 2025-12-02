@@ -4,37 +4,35 @@
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="/styles/default.css">
-        <link rel="stylesheet" href="/styles/modal.css">
         <link rel="stylesheet" href="/styles/canvas.css">
+        <link rel="stylesheet" href="/styles/modal.css">
         <link rel="stylesheet" href="/styles/manage-views.css">
         <title>MAP STUFF</title>
     </head>
     <body>
-        <script type="module" src="/scripts/call/map.js"></script>
-        <script type="module" src="/scripts/draw/stage.js"></script>
-        <script type="module" src="/scripts/draw/trans.js"></script>
-        <script type="module" src="/scripts/draw/screens.js"></script>
-        <script type="module" src="/scripts/draw/tokens.js"></script>
-        <script type="module" src="/scripts/bind/manage-game.js"></script>
+        <script type="module" src="/scripts/modals.js"></script>
+        <script type="module" src="/scripts/styles.js"></script>
+        <script type="module" src="/scripts/call/maps.js"></script>
+        <script type="module" src="/scripts/call/screens.js"></script>
+        <script type="module" src="/scripts/draw/transform.js"></script>
+        <script type="module" src="/scripts/draw/entities.js"></script>
+        <script type="module" src="/scripts/draw/canvas.js"></script>
+        <script type="module" src="/scripts/peek.js"></script>
+        <script type="module" src="/scripts/tokens.js"></script>
+        <script type="module" src="/scripts/bind/test.js"></script>
 
         <div id="layout">
             <div id="views" class="safe column">
-                <div id="views-stage"></div>
-                <button id="map-select" class="button">Change Map...</button>
+                <div id="screens-stage"></div>
+                <button id="map-select" class="button">Change map ...</button>
             </div>
 
             <div id="tokens" class="column">
                 <div class="safe">
-                    <div id="widgets-top"><!-- canvas --></div>
-                    <div id="tokens-stage" ><!-- canvas --></div>
-          
-                    <button class="button">...</button>
-                    <button class="button">Add token...</button>
-                </div>
+                    <div id="tokens-stage"></div>
+                    <div id="peek-stage"></div>
 
-                <div id="widgets">
-                    <div class="widget widget--initiative"></div>
-                    <div class="widget widget--notes"></div>
+                    <button id="token-select" class="button">Add token ...</button>
                 </div>
             </div>
         </div>

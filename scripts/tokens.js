@@ -1,8 +1,8 @@
 import { Canvas } from "/scripts/draw/canvas.js";
-import { Screens } from "/scripts/draw/entities.js";
 import { Transform, Translate, Scale } from "/scripts/draw/transform.js";
+import { Token } from "/scripts/draw/entities.js";
 import { getActive, getMapImage } from "/scripts/call/maps.js";
-import { getScreensState } from "/scripts/call/screens.js";
+import { getEntities } from "/scripts/call/entities.js";
 
 import { COLORS, LAYOUT } from "/scripts/styles.js";
 
@@ -11,8 +11,7 @@ let active = await getActive().then(map => getMapImage(map));
 
 /* INITIALIZE STAGE */
 export const canvas = new Canvas();
-
-const view = new Transform();
+export let view = new Transform();
 view.size.x = active.width;
 view.size.y = active.height;
 
@@ -34,24 +33,16 @@ function try_preview(target) {
     return target;
 }
 
-/* POLLING */
-const POLL_INTERVAL = 2_000;
+/* ENTITIES */
+let tokens = await getEntities().then(entities =>
+    entities.map(entity => new Token(entity, view_limit)));
 
-export const screens = new Screens(view_limit);
-next.target = screens;
+canvas.updateEntities = async function() {
+    console.log("Updated entities.");
 
-async function updateScreens() {
-    await getScreensState().then(shape => screens.updateShape(shape));
-    canvas.render();
+    tokens = await getEntities().then(entities =>
+        entities.map(entity => new Token(entity, view_limit)));
 }
-
-updateScreens();
-
-/*
-setInterval(() => {
-    updateScreens();
-}, POLL_INTERVAL);
-*/
 
 /* STAGE FUNCTIONS */
 canvas.resize = async function(width, height) {
@@ -129,14 +120,12 @@ canvas.mousedown = async function(mouse) {
     }
     
     // otherwise, translate
-    const entities = [ screens ];
-    
-    for (const entity of entities) {
-        const op = entity.checkTranslate(m.x, m.y, (entity == next.target) ? next.op : null);
+    for (const token of tokens) {
+        const op = token.checkTranslate(m.x, m.y, (token == next.target) ? next.op : null);
 
         if (op) {
             next.op = op;
-            next.target = entity;
+            next.target = token;
             return;
         }
     }
@@ -202,15 +191,13 @@ canvas.draw = async function(ctx) {
     ctx.drawImage(active.image, 0, 0);
 
     // draw entities
-    const entities = [ screens ];
-
     ctx.lineWidth = 1 / view.scale;
-    for (const entity of entities) {
+    for (const token of tokens) {
         ctx.save();
-        if (next.target == entity) {
-            entity.draw(ctx, next.op);
+        if (next.target == token) {
+            token.draw(ctx, next.op);
         } else {
-            entity.draw(ctx);
+            token.draw(ctx);
         }
         ctx.restore();
     }

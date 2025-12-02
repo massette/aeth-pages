@@ -74,8 +74,6 @@ export async function getMapImage(map, lazy=true) {
     }));
 }
 
-export async function getMapEntities(map) {}
-
 let active_cache;
 let listeners = [];
 export async function registerStage(stage) {

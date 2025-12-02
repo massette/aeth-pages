@@ -133,16 +133,6 @@ export class Transform {
             this.limits.within(container);
     }
 
-    point(x, y, op) {
-        const trans = op ? this.preview(op)
-                         : this;
-
-        return {
-            x: (x + trans.x) * trans.scale, 
-            y: (y + trans.y) * trans.scale,
-        };
-    }
-
     inverse(x, y, op) {
         const trans = op ? this.preview(op)
                          : this;
