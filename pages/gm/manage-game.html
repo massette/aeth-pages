@@ -1,43 +1,44 @@
 <!DOCTYPE HTML>
 
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="/styles/default.css">
-    <link rel="stylesheet" href="/styles/modal.css">
-    <link rel="stylesheet" href="/styles/canvas.css">
-    <link rel="stylesheet" href="/styles/manage-views.css">
-    <title>MAP STUFF</title>
-  </head>
-  <body>
-    <script type="module" src="/scripts/calls.js"></script>
-    <script type="module" src="/scripts/canvas.js"></script>
-    <script type="module" src="/scripts/map.js"></script>
-    <script type="module" src="/scripts/views/move-screens.js"></script>
-    <script type="module" src="/scripts/views/move-tokens.js"></script>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="/styles/default.css">
+        <link rel="stylesheet" href="/styles/modal.css">
+        <link rel="stylesheet" href="/styles/canvas.css">
+        <link rel="stylesheet" href="/styles/manage-views.css">
+        <title>MAP STUFF</title>
+    </head>
+    <body>
+        <script type="module" src="/scripts/call/map.js"></script>
+        <script type="module" src="/scripts/draw/stage.js"></script>
+        <script type="module" src="/scripts/draw/trans.js"></script>
+        <script type="module" src="/scripts/draw/screens.js"></script>
+        <script type="module" src="/scripts/draw/tokens.js"></script>
+        <script type="module" src="/scripts/bind/manage-game.js"></script>
 
-    <div id="layout">
-      <div id="views" class="safe column">
-        <div id="views-stage"></div>
-        <button id="map-select" class="button">Change Map...</button>
-      </div>
+        <div id="layout">
+            <div id="views" class="safe column">
+                <div id="views-stage"></div>
+                <button id="map-select" class="button">Change Map...</button>
+            </div>
 
-      <div id="tokens" class="column">
-        <div class="safe">
-          <div id="widgets-top"><!-- canvas --></div>
-          <div id="tokens-stage" ><!-- canvas --></div>
+            <div id="tokens" class="column">
+                <div class="safe">
+                    <div id="widgets-top"><!-- canvas --></div>
+                    <div id="tokens-stage" ><!-- canvas --></div>
           
-          <button class="button">...</button>
-          <button class="button">Add token...</button>
+                    <button class="button">...</button>
+                    <button class="button">Add token...</button>
+                </div>
+
+                <div id="widgets">
+                    <div class="widget widget--initiative"></div>
+                    <div class="widget widget--notes"></div>
+                </div>
+            </div>
         </div>
 
-        <div id="widgets">
-          <div class="widget widget--initiative"></div>
-          <div class="widget widget--notes"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="overlay"></div>
-  </body>
+        <div id="overlay"></div>
+    </body>
 </html>

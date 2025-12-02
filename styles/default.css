@@ -3,9 +3,9 @@
 html { font-size: 100%; }
 
 body {
-  --color-fg: #EDB759;
-  --color-mid: #E4A2A2;
-  --color-bg: #9064C6;
+  --color-fg:  #fc3;
+  --color-mid: #d91;
+  --color-bg:  #000;
 
   /* yellows: fc3 d91 c70 00 */
 
@@ -65,6 +65,10 @@ input, button {
 }
 .button-discard:hover {
   background: var(--color-bad);
+}
+
+:read-only {
+    color: inherit;
 }
 
 :checked + .button {

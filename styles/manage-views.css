@@ -20,7 +20,7 @@ body {
   /* background: #DC267F; */
 }
 
-#views-stage {
+#screens-stage {
   height: calc(var(--safe-height) - var(--button));
   aspect-ratio: 1 / 1;
 

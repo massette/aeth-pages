@@ -1,8 +1,19 @@
-import { Transform } from "/scripts/draw/transform.js";
+const cache = [
+    {
+        x: 0,
+        y: 0,
+        width: 1024,
+        height: 600,
+    },
+];
 
-export class Screen extends Transform {
-    draw(ctx, next_op) {
-        const { x, y, scale } = this.preview(next_op);
-        ctx.fillRect(x - scale, y - scale, 2 * scale, 2 * scale);
-    }
+export async function getScreensState() {
+    return fetch("/api/Screens/layout").then(response => {
+        if (!response.ok)
+            return Promise.reject(response);
+
+        return response.json();
+    }).catch(err => {
+        console.log("Failed to fetch screens state!", err);
+    });
 }

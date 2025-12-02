@@ -1,126 +1,167 @@
+import { LAYOUT } from "/scripts/styles.js";
+
 class Operation {
-    target;
     anchor;
     delta;
 
-    constructor(target, anchor, delta) {
-        this.target = target;
-        this.anchor = anchor;
+    constructor(anchor, delta) {
+        this.anchor = anchor ?? null;
         this.delta = delta ?? { x: 0, y: 0 };
     }
 
-    position(x, y) { return { x, y }; }
-    scale(s) { return s; }
-    limit(limits) {}
-}
-
-export class Transform {
-    size = { x: 1, y: 1 };
-
-    x = 0;
-    y = 0;
-    scale = 1.00;
-    
-    ops_queue = [];
-
-    limits = {
-        min:     { x: 0, y: 0 },
-        max:     { x: 100, y: 100 },
-        size:    { x: 0, y: 0 },
-        padding: {
-            min: { x: 0, y: 0 },
-            max: { x: 0, y: 0 },
-        },
-    };
-
-    apply(op) {
-        ({ x: this.x, y: this.y, scale: this.scale } = this.preview(op));
-    }
-
-    preview(op) {
-        let state = this.ops_queue.reduce((acc, op) =>
-            op.apply(acc.x, acc.y, acc.scale), this);
-
-        if (op?.target == this) {
-            op.limit(state.x, state.y, state.scale);
-            state = op.apply(state.x, state.y, state.scale);
-        }
-
-        return state;
+    apply(target) {
+        return target;
     }
 }
 
 export class Translate extends Operation {
-    apply(x, y, scale) {
-        return {
-            x: x + this.delta.x,
-            y: y + this.delta.y,
-            scale,
-        }
-    }
+    apply(target) {
+        const x = target.x + this.delta.x;
+        const y = target.y + this.delta.y;
 
-    limit(x, y, scale) {
-        this.delta.x = Math.min(
-            Math.max(
-                this.delta.x,
-                this.target.limits.min.x - this.target.limits.padding.min.x / scale - x + 2
-            ),
-            this.target.limits.max.x - this.target.size.x + Math.trunc(this.target.limits.padding.max.x / scale) - x
-        );
-
-        this.delta.y = Math.min(
-            Math.max(
-                this.delta.y,
-                this.target.limits.min.y - this.target.limits.padding.min.y / scale - y + 2
-            ),
-            this.target.limits.max.y - this.target.size.y + this.target.limits.padding.max.y / scale - y
-        );
+        return { ...target, x, y };
     }
 }
+
 export class Scale extends Operation {
-    apply(x, y, scale) {
-        const new_scale = Math.abs(Math.min(
-            this.delta.x / this.target.size.x,
-            this.delta.y / this.target.size.y,
-        ));
-        
-        const test = (this.anchor.x + x) * (scale / new_scale) - this.anchor.x;
+    size;
+
+    apply(target) {
+        const size = this.size ?? target.size;
+
+        const scale = Math.max(
+            Math.abs(this.delta.x / size.x),
+            Math.abs(this.delta.y / size.y),
+        );
+
+        const x = target.x - (this.anchor.x - target.x) * (scale / target.scale) + (this.anchor.x - target.x);
+        const y = target.y - (this.anchor.y - target.y) * (scale / target.scale) + (this.anchor.y - target.y);
+
+        return { ...target, x, y, scale };
+    }
+}
+
+class Limit extends Operation {
+    constructor(fixed) {
+        super();
+        this.fixed = fixed;
+    }
+}
+
+class LimitWithin extends Limit {
+    apply(target) {
+        const scale = Math.min(
+            target.scale,
+            this.fixed.size.x / target.size.x,
+            this.fixed.size.y / target.size.y,
+        );
+
+        const x = Math.min(
+            Math.max(target.x, this.fixed.x),
+            this.fixed.x + this.fixed.size.x - target.size.x * scale,
+        );
+
+        const y = Math.min(
+            Math.max(target.y, this.fixed.y),
+            this.fixed.y + this.fixed.size.y - target.size.y * scale,
+        );
+
+        return { ...target, x, y, scale };
+    }
+}
+
+class LimitContain extends Limit {
+    apply(target) {
+        const scale = Math.max(
+            target.scale,
+            Math.min(
+                this.fixed.size.x / target.size.x,
+                this.fixed.size.y / target.size.y,
+            ),
+        );
+
+        const x = Math.max(
+            Math.min(target.x, this.fixed.x),
+            this.fixed.x + this.fixed.size.x - target.size.x * scale,
+        );
+
+        const y = Math.max(
+            Math.min(target.y, this.fixed.y),
+            this.fixed.y + this.fixed.size.y - target.size.y * scale,
+        );
+
+        return { ...target, x, y, scale };
+    }
+}
+
+class Limits extends Operation {
+    limits = [];
+
+    clear() {
+        this.limits = [];
+    }
+
+    within(fixed) {
+        this.limits.push(new LimitWithin(fixed));
+    }
+
+    contain(fixed) {
+        this.limits.push(new LimitContain(fixed));
+    }
+
+    apply(target) {
+        return this.limits.reduce((acc, limit) => limit.apply(acc), target);
+    }
+}
+
+export class Transform {
+    size = { x: 0, y: 0 };
+
+    x = 0;
+    y = 0;
+    scale = 1.00;
+
+    limits = {
+        min:     { x: null, y: null, scale: null, size: { x: null, y: null }},
+        max:     { x: null, y: null, scale: null, size: { x: null, y: null }},
+    };
+
+    constructor(container) {
+        this.limits = new Limits();
+
+        if (container)
+            this.limits.within(container);
+    }
+
+    point(x, y, op) {
+        const trans = op ? this.preview(op)
+                         : this;
 
         return {
-            x: Math.min(
-                Math.max(
-                    (this.anchor.x + x) * (scale / new_scale) - this.anchor.x,
-                    this.target.limits.min.x - this.target.limits.padding.min.x / new_scale + 2,
-                ),
-                this.target.limits.max.x + this.target.limits.padding.max.x / new_scale - this.target.size.x
-            ),
-            y: Math.min(
-                Math.max(
-                    (this.anchor.y + y) * (scale / new_scale) - this.anchor.y,
-                    this.target.limits.min.y - this.target.limits.padding.min.y / new_scale + 2,
-                ),
-                this.target.limits.max.y + this.target.limits.padding.max.y / new_scale - this.target.size.y
-            ),
-            scale: new_scale,
+            x: (x + trans.x) * trans.scale, 
+            y: (y + trans.y) * trans.scale,
         };
     }
 
-    limit() {
-        this.delta.x = Math.max(
-            Math.min(
-                this.delta.x,
-                Math.abs(this.target.limits.max.x + this.target.limits.padding.max.x
-                    - this.target.limits.min.x + this.target.limits.padding.min.x)
-            ),
-            this.target.limits.size.x
-        );
-        this.delta.y = Math.max(
-            Math.min(
-                this.delta.y,
-                Math.abs(this.target.limits.max.y + this.target.limits.padding.max.y
-                    - this.target.limits.min.y + this.target.limits.padding.min.y)
-            ),
-            this.target.limits.size.y
-        );
+    inverse(x, y, op) {
+        const trans = op ? this.preview(op)
+                         : this;
+
+        return {
+            x: (x - trans.x) / trans.scale,
+            y: (y - trans.y) / trans.scale,
+        };
     }
+
+    apply(...ops) {
+        ({ x: this.x, y: this.y, scale: this.scale } = this.preview(...ops));
+    }
+
+    preview(...ops) {
+        const trans = ops.reduce((acc, op) => op.apply(acc), this);
+        return this.limits.apply(trans);
+    }
+
+    checkScale(x, y, op) { return null; }
+    checkTranslate(x, y, op) { return null; }
 }
